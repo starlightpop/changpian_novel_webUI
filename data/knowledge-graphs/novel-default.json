@@ -1,0 +1,196 @@
+{
+  "novelId": "novel-default",
+  "novelName": "风暴使者手记",
+  "version": 1,
+  "nodes": [
+    {
+      "id": "novel-root",
+      "kind": "novel",
+      "label": "风暴使者手记",
+      "text": "女频，玄幻言情，重生，团宠，反派，无CP\n【无cp团宠非女强】\n上一世，桑查至死都得不到师尊的认可，只因有小师妹在，同门的眼里就不会有自己。\n重生一回，桑杳知道了自己是一本书中的配角，而配角是不能跟身负气运的主角斗的。\n那还说啥了，打不过她还跑不过吗?\n在小师妹来到青云宗的第一天，她就跑路了。\n被一家农户捡走后，成了他们家唯一的女儿。\n爹爹是个教书先生，娘亲连碾死蚂蚁都要落泪，哥哥们虽脾气古怪，对她也是极尽溺爱。直到前世的劫难再临，魔族在凡人的城镇肆虐，她看见视她如敝屣的师父和同门们如众星拱月一般将小师妹护在中心。\n随后被领头的魔族一击击落。\n纷争蔓延到了她家的小院，桑杳攥紧剑誓死保护自己的家。\n结果就看到柔弱的娘亲打开门，一刀削掉了那魔族的脑袋，温和的父亲一振袖，天地化为炼狱。\n她看见总是笑眯眯的哥哥敛了神色，轻嗤:“不长眼的蝼蚁。\n爹娘念叨着宝贝闺女什么时候回来，顺手给她不可一世的师尊捅了个对穿。\n桑杳:???\n你们到底是谁啊!\n在知道爹娘直实身份前桑本一直听爹娘说一哥被闲在秘境里。"
+    },
+    {
+      "id": "group:world-setting",
+      "kind": "group",
+      "label": "世界观设定",
+      "text": "世界观设定"
+    },
+    {
+      "id": "group:character-growth",
+      "kind": "group",
+      "label": "角色与成长（动力源）",
+      "text": "角色与成长（动力源）"
+    },
+    {
+      "id": "group:themes-core",
+      "kind": "group",
+      "label": "主题与核心",
+      "text": "主题与核心"
+    },
+    {
+      "id": "group:plot-framework",
+      "kind": "group",
+      "label": "剧情与伏笔（因果线）",
+      "text": "剧情与伏笔（因果线）"
+    },
+    {
+      "id": "asset:ai-novel-default-0-1780854227210",
+      "kind": "location",
+      "label": "青溪村",
+      "text": "青溪村\n上古禁制节点，表现为‘因果迷雾区’。任何带有掠夺性气运或恶意杀意的修真者进入后，灵力强制降维为凡人状态。村民为守序者后裔，潜意识维护平衡，桑杳情绪波动时可引发环境异变（如雨水逆流），是风暴使者的物理基础。",
+      "assetId": "ai-novel-default-0-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-1-1780854227210",
+      "kind": "faction",
+      "label": "青云宗",
+      "text": "青云宗\n建立在灵脉节点上的修真青云宗，灵脉已被苏清歌的气运污染。高层依赖气运维持地位，视凡人为耗材；中层在良知与体制间挣扎；底层为狂热信徒。内部撕裂严重，是旧秩序的代表，最终因气运枯竭与规则克制而崩盘。",
+      "assetId": "ai-novel-default-1-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-2-1780854227210",
+      "kind": "system",
+      "label": "气运与羁绊体系",
+      "text": "气运与羁绊体系\n气运体系为掠夺型，依赖外界认可与供奉，越强则周围人运势越衰；羁绊体系为共生型，基于情感连接与规则定义，对气运具有概念级克制（否定气运有效性）。桑杳的‘羁绊之力’是连接凡间与规则界的锚点。",
+      "assetId": "ai-novel-default-2-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-7-1780854227210",
+      "kind": "core-power",
+      "label": "风暴使者",
+      "text": "风暴使者\n桑杳的最终身份。非武力天花板，而是秩序的维护者与情感的连接者。通过共鸣他人痛苦与爱意，转化为稳定能量场，连接被气运体系压迫的人，形成羁绊网络，对抗旧秩序崩塌带来的混乱。",
+      "assetId": "ai-novel-default-7-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-8-1780854227210",
+      "kind": "secret-clue",
+      "label": "青溪村禁制机制",
+      "text": "青溪村禁制机制\n前期伏笔：村民对桑杳过度热情，村中无刑事案件。后期回收：村民血脉为守序者后裔，集体潜意识中庇护桑家。桑杳以为自己在保护村民，实则是村民在庇护桑家，形成迪化反差。",
+      "assetId": "ai-novel-default-8-1780854227210"
+    },
+    {
+      "id": "asset:master-outline-novel-default-1780854227211",
+      "kind": "main-outline",
+      "label": "全书总纲（开始-发展-高潮-结局）",
+      "text": "全书总纲（开始-发展-高潮-结局）\n## 开始\n桑杳（前世名桑查）重生后，带着前世的创伤与对‘气运女主’小师妹的恐惧，在小师妹入门当日毅然逃离青云宗。她被桑家收养，在青溪村过着平静的凡人生活。桑杳以为自己在努力融入，实则桑家父母（桑文渊、林婉，表面是教书先生和落泪农妇，实则有隐藏身份）与多位哥哥（包括大哥桑天，以及二弟、三弟等，性格各异，对桑杳极尽溺爱）早已察觉她的特殊。桑杳在村中体验亲情温暖，治愈‘配得感缺失’。此时，青云宗因小师妹气运反噬出现动荡，派人调查失踪的桑杳，但进入青溪村后灵力被禁制降维，调查无果。桑杳以为只是巧合，继续过着被家人宠溺的日子，并无意中通过日常行为（如切菜角度）协助家人清理了早期威胁。桑杳一直听爹娘说大哥桑天被‘闲’在秘境里（实为被封印/镇守某处，父母以此误导女儿以保护其天真），对此深信不疑，而其他哥哥则通过各自古怪的方式（如二弟经商情报网、三弟机关术）暗中保护村庄，展现家族群像的温暖与强大。\n\n## 发展\n随着剧情推进，青云宗与魔族的冲突升级，气运枯竭导致修真界动荡加剧。桑杳逐渐察觉家中异常：父亲桑文渊偶尔因使用规则之力而‘遗忘’部分记忆，母亲林婉斩杀敌人后承受痛苦回响，这些是隐藏身份的限制而非战力削弱。桑杳开始尝试主动修炼，试图以‘羁绊之力’连接家人，成为他们的‘因果锚点’。青云宗高层无尘子发现桑杳的存在，试图以‘救赎’为名将其带回，实则想利用她体内的上古禁制钥匙。小师妹在气运反噬下精神崩溃，向桑杳求助，两人形成镜像对照。桑杳拒绝回归，选择守护家人。期间，桑家通过规则手段多次化解危机，桑杳在震惊中逐渐理解家人的真实身份，心理从‘逃避者’转变为‘守护者’。大哥桑天仍被描述为‘被封印以镇压某种危机’，并未完全现身，为高潮铺垫。\n\n## 高潮\n魔族大举入侵，青云宗防线崩溃，无尘子堕魔，试图献祭凡人强行续命气运。纷争蔓延至青溪村。桑家被迫出手，桑文渊定义现实逻辑，林婉抹除魔族因果。桑杳作为‘风暴之眼’，汇聚全家羁绊之力，形成绝对防御场，保护青溪村与无辜凡人。桑家哥哥们（二弟、三弟等）在旁协助，以各自古怪但有效的方式清理残敌。无尘子目睹桑杳在‘非气运’状态下获得的真心羁绊，道心崩塌，被桑文渊与林婉‘顺手’击杀（符合简介‘捅了个对穿’的设定，强调父母随手为之的震撼感，而非大哥出手）。随后，大哥桑天从‘秘境’（实为封印处）归来，启动归墟格式化，清理战场残余。小师妹失去气运庇护，面临凡人命运，桑杳给予她重新选择的机会。桑杳在战斗中觉醒‘风暴使者’身份，意识到自己不仅是爱的承受者，更是新秩序的维护者。\n\n## 结局\n旧秩序（气运体系）崩塌，世界陷入短暂混乱。桑家不重建新秩序，而是提供‘规则框架’：父亲定义逻辑，母亲维护因果，大哥维持平衡。桑杳成为‘风暴使者’，游历世间，调解因旧秩序崩塌产生的矛盾，确保世界在自由与规则间找到新平衡。桑家回归平凡生活，但暗中守护世界平衡。小师妹选择隐居，反思过往。桑杳彻底治愈前世创伤，确立自我价值，与桑家成员（父母及所有哥哥）共同迎接新纪元。伏笔全部回收，主题落点于‘爱比掠夺更强大’、‘羁绊重于气运’。",
+      "assetId": "master-outline-novel-default-1780854227211"
+    },
+    {
+      "id": "asset:ai-novel-default-9-1780854227210",
+      "kind": "main-outline",
+      "label": "因果清算与规则重构",
+      "text": "因果清算与规则重构\n主线：桑杳逃离青云宗 -> 融入桑家 -> 察觉家人身份 -> 对抗魔族与青云宗 -> 觉醒风暴使者 -> 重构世界秩序。核心矛盾从个人生存升级为新旧秩序之争，最终通过规则克制气运，实现主题升华。",
+      "assetId": "ai-novel-default-9-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-10-1780854227210",
+      "kind": "pace-hooks",
+      "label": "迪化信息差",
+      "text": "迪化信息差\n节奏钩子：桑杳以为自己在努力守护平凡家，实则家人在暗中清理所有威胁。例如桑杳做饭切菜角度切断探子因果线，家人解释为巧合。这种双向误解提供喜剧张力，缓解重生压抑感，维持读者兴趣。",
+      "assetId": "ai-novel-default-10-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-11-1780854227210",
+      "kind": "planting",
+      "label": "大哥的秘境书信",
+      "text": "大哥的秘境书信\n前期伏笔：桑天偶尔通过书信或梦境传递破碎画面（星空、齿轮、断裂锁链）。桑杳以为哥哥被囚禁受苦，实则这些画面是世界底层代码的映射。",
+      "assetId": "ai-novel-default-11-1780854227210"
+    },
+    {
+      "id": "asset:ai-novel-default-12-1780854227210",
+      "kind": "payoff",
+      "label": "秘境归来的真相",
+      "text": "秘境归来的真相\n后期回收：桑天打破秘境壁垒，并非逃出生天，而是主动‘格式化’局部区域，抽离青云宗灵气，使其回归凡俗。破碎画面揭示世界真相：气运体系是上位者篡改的Bug，桑天是活体补丁。",
+      "assetId": "ai-novel-default-12-1780854227210"
+    }
+  ],
+  "edges": [
+    {
+      "source": "novel-root",
+      "target": "group:world-setting",
+      "type": "contains"
+    },
+    {
+      "source": "novel-root",
+      "target": "group:character-growth",
+      "type": "contains"
+    },
+    {
+      "source": "novel-root",
+      "target": "group:themes-core",
+      "type": "contains"
+    },
+    {
+      "source": "novel-root",
+      "target": "group:plot-framework",
+      "type": "contains"
+    },
+    {
+      "source": "group:world-setting",
+      "target": "asset:ai-novel-default-0-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:world-setting",
+      "target": "asset:ai-novel-default-1-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:world-setting",
+      "target": "asset:ai-novel-default-2-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:themes-core",
+      "target": "asset:ai-novel-default-7-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:themes-core",
+      "target": "asset:ai-novel-default-8-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:plot-framework",
+      "target": "asset:master-outline-novel-default-1780854227211",
+      "type": "contains"
+    },
+    {
+      "source": "group:plot-framework",
+      "target": "asset:ai-novel-default-9-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:plot-framework",
+      "target": "asset:ai-novel-default-10-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:plot-framework",
+      "target": "asset:ai-novel-default-11-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "group:plot-framework",
+      "target": "asset:ai-novel-default-12-1780854227210",
+      "type": "contains"
+    },
+    {
+      "source": "asset:ai-novel-default-11-1780854227210",
+      "target": "asset:ai-novel-default-12-1780854227210",
+      "type": "foreshadow-payoff",
+      "text": "兼容旧数据的弱关联；新数据应使用 Promise Ledger。"
+    },
+    {
+      "source": "asset:master-outline-novel-default-1780854227211",
+      "target": "asset:ai-novel-default-10-1780854227210",
+      "type": "plot-hook"
+    },
+    {
+      "source": "asset:ai-novel-default-9-1780854227210",
+      "target": "asset:ai-novel-default-10-1780854227210",
+      "type": "plot-hook"
+    }
+  ],
+  "updatedAt": "2026-06-08T15:23:55.511Z"
+}

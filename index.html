@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小说创作与设定协同系统</title>
+    <!-- 引入高质感现代字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div id="app" class="app-container">
+      <!-- 左侧边栏：项目上下文与素材 -->
+      <aside class="sidebar">
+        <!-- 侧边栏页眉，动态显示当前活动小说名称 -->
+        <div class="sidebar-header">
+          <h2 id="active-novel-name">项目上下文与素材</h2>
+        </div>
+        
+        <!-- 新建小说操作栏 -->
+        <div class="sidebar-top-actions" style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">小说书架</span>
+          <button class="icon-btn-text" id="add-novel-btn" title="创建新小说" style="padding: 2px 8px;">
+            <i data-lucide="plus"></i>
+            <span>新建小说</span>
+          </button>
+        </div>
+
+        <!-- 侧边栏内容区，动态渲染多本小说列表 -->
+        <div class="sidebar-content" id="novels-container" style="gap: 16px; padding: 16px 12px;">
+           <!-- 由 JS 动态生成多本小说的大列表 -->
+        </div>
+      </aside>
+
+      <!-- 右侧主编辑面板 -->
+      <main class="editor-container">
+        <!-- 编辑器页眉 -->
+        <header class="editor-header">
+          <div class="chapter-nav">
+            <select id="chapter-select" class="chapter-dropdown">
+              <!-- JS 动态生成 -->
+            </select>
+            <button class="icon-btn-text" id="add-chapter-btn" title="新建章节">
+              <i data-lucide="plus"></i>
+              <span>新建章节</span>
+            </button>
+            <div id="active-asset-header" class="active-asset-header hidden" style="display: flex; align-items: center; gap: 12px;">
+              <button id="back-to-chapter-btn" class="icon-btn-text" title="返回章节编辑">
+                <i data-lucide="arrow-left"></i>
+                <span>返回编辑</span>
+              </button>
+              <span class="divider"></span>
+              <span class="active-asset-title" id="active-asset-title" style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">设定：</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" id="settings-btn" title="设置"><i data-lucide="settings"></i></button>
+          </div>
+        </header>
+
+        <!-- 编辑区工作台 -->
+        <div class="editor-workspace">
+          <!-- 工具栏 -->
+          <div class="editor-toolbar">
+            <div class="toolbar-left">
+              <button class="tool-btn" id="btn-bold" title="加粗 (Ctrl+B)"><i data-lucide="bold"></i></button>
+              <button class="tool-btn" id="btn-italic" title="斜体 (Ctrl+I)"><i data-lucide="italic"></i></button>
+              <button class="tool-btn" id="btn-comment" title="插入批注"><i data-lucide="message-square"></i></button>
+              <span class="divider"></span>
+              <button class="tool-btn" id="btn-heading" title="插入标题 (Ctrl+H)"><i data-lucide="heading"></i></button>
+              <button class="tool-btn" id="btn-code" title="插入代码块"><i data-lucide="code"></i></button>
+            </div>
+            <div class="toolbar-right">
+              <div class="mode-selector">
+                <button class="mode-btn active" id="mode-edit">编辑</button>
+                <button class="mode-btn" id="mode-preview">预览</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 文本编辑 / 预览区域 -->
+          <div class="editor-body">
+            <textarea id="editor-textarea" placeholder="在此开始创作您的故事... 支持 Markdown 格式"></textarea>
+            <div id="editor-preview" class="markdown-preview hidden"></div>
+            <div id="knowledge-graph-view" class="knowledge-graph-view hidden">
+              <div class="graph-toolbar">
+                <div>
+                  <strong>人物关系拓扑</strong>
+                  <span id="graph-summary"></span>
+                </div>
+                <div class="graph-controls">
+                  <input id="graph-search-input" type="search" placeholder="搜索人物" />
+                  <select id="graph-faction-filter"><option value="">全部势力</option></select>
+                  <select id="graph-relation-filter"><option value="">全部关系</option></select>
+                  <button type="button" class="icon-btn-text" id="graph-reset-view">
+                    <i data-lucide="maximize-2"></i>
+                    <span>重置视图</span>
+                  </button>
+                </div>
+              </div>
+              <div class="graph-canvas-wrap">
+                <svg id="character-graph-svg" class="character-graph-svg" viewBox="0 0 1200 760"></svg>
+                <aside id="graph-node-detail" class="graph-node-detail">
+                  <span>点击人物节点查看身份、势力、经历、结局、人物弧光、高光与性格。</span>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 多 Agent 任务发布入口 -->
+        <footer class="agent-task-container">
+          <div id="agent-task-status" class="agent-task-status hidden">
+            <i data-lucide="loader-2" class="animate-spin"></i>
+            <span id="agent-task-status-text">正在分配任务...</span>
+          </div>
+          <div class="agent-task-input-wrapper">
+            <div class="agent-task-label">
+              <i data-lucide="workflow"></i>
+              <span>多 Agent</span>
+            </div>
+            <textarea id="agent-task-textarea" placeholder="输入背景设定：【...】，简介：【...】，系统会先保存为独立文件，再交给多 Agent 执行..." rows="1"></textarea>
+            <button id="agent-task-send-btn" class="agent-task-send-btn">
+              <span>执行任务</span>
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <!-- 编辑小说基础信息 -->
+    <div class="modal-backdrop hidden" id="novel-info-modal">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <div>
+            <h3>编辑小说信息</h3>
+            <p class="modal-subtitle">背景设定和简介会作为所有 Agent 与图谱检索的最高级约束。</p>
+          </div>
+          <button class="close-btn-circle" id="close-novel-info-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="novel-info-form">
+            <input type="hidden" id="novel-info-id" />
+            <div class="form-group">
+              <label for="novel-info-name">小说名称</label>
+              <input id="novel-info-name" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="novel-info-background">背景设定</label>
+              <textarea id="novel-info-background" rows="5" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="novel-info-synopsis">作品简介</label>
+              <textarea id="novel-info-synopsis" rows="12"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="cancel-novel-info">取消</button>
+              <button type="submit" class="btn btn-primary">保存并更新图谱</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 人物体系审核弹窗 -->
+    <div class="modal-backdrop hidden" id="character-review-modal">
+      <div class="modal character-review-modal">
+        <div class="modal-header">
+          <div>
+            <h3>审核人物体系</h3>
+            <p class="modal-subtitle">审核通过后，人物档案与关系拓扑才会写入左侧设定库。</p>
+          </div>
+        </div>
+        <div class="modal-body character-review-body">
+          <div class="character-review-stats">
+            <div><strong id="character-review-count">0</strong><span>具名人物</span></div>
+            <div><strong id="character-review-relation-count">0</strong><span>关系连线</span></div>
+            <div><strong id="character-review-faction-count">0</strong><span>所属阵营</span></div>
+            <div><strong id="character-audit-score">0</strong><span>人物审计分</span></div>
+          </div>
+          <div id="character-audit-report" class="character-audit-report"></div>
+          <div id="character-review-list" class="character-review-list"></div>
+          <div class="form-actions outline-review-actions">
+            <button type="button" class="btn btn-secondary" id="btn-reject-characters">退回修改</button>
+            <button type="button" class="btn btn-primary" id="btn-approve-characters">审核通过并应用</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 总纲审核弹窗 -->
+    <div class="modal-backdrop hidden" id="outline-review-modal">
+      <div class="modal outline-review-modal">
+        <div class="modal-header">
+          <div>
+            <h3>审核全书总纲</h3>
+            <p class="modal-subtitle">确认后才会更新左侧设定库；退回不会覆盖现有数据。</p>
+          </div>
+        </div>
+        <div class="modal-body outline-review-body">
+          <div class="outline-summary">
+            <span>作品定位</span>
+            <p id="outline-review-summary"></p>
+          </div>
+          <section class="outline-stage beginning">
+            <div class="outline-stage-title"><span>01</span><h4>开始</h4></div>
+            <p id="outline-review-beginning"></p>
+          </section>
+          <section class="outline-stage development">
+            <div class="outline-stage-title"><span>02</span><h4>发展</h4></div>
+            <p id="outline-review-development"></p>
+          </section>
+          <section class="outline-stage climax">
+            <div class="outline-stage-title"><span>03</span><h4>高潮</h4></div>
+            <p id="outline-review-climax"></p>
+          </section>
+          <section class="outline-stage ending">
+            <div class="outline-stage-title"><span>04</span><h4>结局</h4></div>
+            <p id="outline-review-ending"></p>
+          </section>
+          <div class="form-actions outline-review-actions">
+            <button type="button" class="btn btn-secondary" id="btn-reject-outline">退回修改</button>
+            <button type="button" class="btn btn-primary" id="btn-approve-outline">
+              <span>审核通过并应用</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 创建新小说并使用 AI 初始化设定 -->
+    <div class="modal-backdrop hidden" id="new-novel-modal">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <div>
+            <h3>创建新小说</h3>
+            <p class="modal-subtitle">多 Agent 将协作分析背景设定与简介，并自动生成左侧设定库。</p>
+          </div>
+          <button class="close-btn-circle" id="close-new-novel-modal" title="关闭"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="new-novel-form">
+            <div class="form-group">
+              <label for="new-novel-name">小说名称 <span class="required-mark">*</span></label>
+              <input type="text" id="new-novel-name" placeholder="例如：重生后全家都是隐藏大佬" required />
+            </div>
+            <div class="form-group">
+              <label for="new-novel-background">背景设定 <span class="required-mark">*</span></label>
+              <textarea id="new-novel-background" rows="4" placeholder="必须明确男频或女频。例如：女频，玄幻言情，重生，团宠，反派，无 CP" required></textarea>
+              <p class="form-hint">必填，且必须明确包含“男频”或“女频”。可继续填写题材、时代、世界规则、感情线等关键词。</p>
+            </div>
+            <div class="form-group">
+              <label for="new-novel-synopsis">作品简介 <span class="optional-mark">选填</span></label>
+              <textarea id="new-novel-synopsis" rows="10" placeholder="粘贴作品简介、核心梗概或主要剧情。留空时，AI 将仅根据背景设定构建设定库。"></textarea>
+            </div>
+            <div id="new-novel-error" class="form-error hidden"></div>
+            <div id="new-novel-progress" class="ai-analysis-progress hidden">
+              <i data-lucide="loader-2" class="animate-spin"></i>
+              <div>
+                <strong>多 Agent 正在分析作品设定</strong>
+                <span id="new-novel-progress-text">正在并行提取角色、世界观、冲突与长线伏笔...</span>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-new-novel">取消</button>
+              <button type="submit" class="btn btn-primary" id="btn-create-new-novel">
+                <span>分析并创建</span>
+                <i data-lucide="sparkles"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增 / 编辑设定素材的模态弹窗 -->
+    <div class="modal-backdrop hidden" id="asset-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modal-title">添加设定素材</h3>
+          <button class="close-btn-circle" id="close-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="asset-form">
+            <input type="hidden" id="asset-id" />
+            <input type="hidden" id="asset-group-type" />
+            
+            <div class="form-group">
+              <label for="asset-type">设定类别</label>
+              <select id="asset-type" required>
+                <!-- 由 JS 动态决定类型选项 -->
+              </select>
+              <input type="text" id="asset-custom-type" class="hidden" placeholder="请输入自定义类别，例如：主要人物" style="margin-top: 8px;" />
+            </div>
+            <div class="form-group">
+              <label for="asset-name">素材名称</label>
+              <input type="text" id="asset-name" placeholder="请输入设定项名称，例如：静水港" required />
+            </div>
+            <div class="form-group">
+              <label for="asset-desc">描述 / 设定内容</label>
+              <textarea id="asset-desc" placeholder="请输入设定细节，支持 Markdown 格式..." rows="6" required></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-modal">取消</button>
+              <button type="submit" class="btn btn-primary">保存设定</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置 API Key 的模态弹窗 -->
+    <div class="modal-backdrop hidden" id="settings-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>系统设置</h3>
+          <button class="close-btn-circle" id="close-settings-modal" title="关闭"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="settings-form">
+            <div class="form-group">
+              <label for="api-url-input">API 接口地址 (Base URL)</label>
+              <input type="text" id="api-url-input" placeholder="例如 https://generativelanguage.googleapis.com 或 https://api.openai.com/v1" style="width: 100%; box-sizing: border-box;" required />
+            </div>
+            <div class="form-group">
+              <label for="api-key-input">API Key</label>
+              <input type="text" id="api-key-input" placeholder="请输入您的 API Key..." style="width: 100%; box-sizing: border-box;" />
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
+                API Key 将保存在本地 LocalStorage 中，仅用于与 AI 进行交互。
+              </p>
+            </div>
+            <div class="form-group">
+              <label for="model-input">AI 模型型号</label>
+              <input type="text" id="model-input" placeholder="请输入模型型号，例如 gemini-2.0-flash..." style="width: 100%; box-sizing: border-box;" required />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-settings">取消</button>
+              <button type="submit" class="btn btn-primary">保存设置</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 多 Agent 任务进度与状态管理弹窗 -->
+    <div class="modal-backdrop hidden" id="agent-progress-modal">
+      <div class="modal agent-progress-modal">
+        <div class="modal-header">
+          <div>
+            <h3>多 Agent 协同创作系统</h3>
+            <p class="modal-subtitle">多个专业 AI Agent 正在深度协同，为您生成最契合大纲的内容。</p>
+          </div>
+        </div>
+        <div class="modal-body agent-progress-body">
+          <!-- 总体状态/进度条 -->
+          <div class="agent-progress-header">
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="agent-progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-percentage" id="agent-progress-percentage">0%</div>
+          </div>
+          
+          <!-- Agent 节点链状态 -->
+          <div class="agent-nodes-container" id="agent-nodes-container">
+            <!-- 节点会动态生成 -->
+          </div>
+
+          <!-- 实时日志/思考过程 -->
+          <div class="agent-log-container">
+            <div class="agent-log-header">
+              <span>协同日志与思考过程</span>
+              <span class="pulse-indicator">●</span>
+            </div>
+            <div class="agent-log-content" id="agent-log-content">
+              <div class="log-line system">系统初始化，等待任务分配...</div>
+            </div>
+          </div>
+
+          <!-- 任务结束反馈状态 -->
+          <div id="agent-result-panel" class="agent-result-panel hidden">
+            <!-- 成功/失败的图标和文字 -->
+          </div>
+
+          <!-- 底部操作按钮 -->
+          <div class="form-actions progress-actions">
+            <button type="button" class="btn btn-primary hidden" id="btn-progress-action">查看并审核结果</button>
+            <button type="button" class="btn btn-secondary hidden" id="btn-progress-close">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
