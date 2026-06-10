@@ -354,6 +354,29 @@ function saveState() {
   localStorage.setItem('novel_api_model', state.apiModel);
   localStorage.setItem('novel_api_url', state.apiUrl);
   localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
+  persistStateToDatabase();
+}
+
+async function persistStateToDatabase() {
+  try {
+    const body = JSON.stringify({
+      novels: state.novels,
+      activeNovelId: state.activeNovelId,
+      collapsedNovels: collapsedNovels,
+      apiKey: state.apiKey,
+      apiModel: state.apiModel,
+      apiUrl: state.apiUrl,
+      viewMode: state.viewMode || 'edit',
+      heartbeatState: heartbeatState
+    });
+    await fetch('/api/save-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+  } catch (e) {
+    // SQLite 不可用时静默降级
+  }
 }
 
 function applyViewMode() {
@@ -9140,7 +9163,41 @@ function initEvents() {
 /* ==========================================================================
    Initialization Launcher
    ========================================================================== */
-function init() {
+async function restoreFromDatabase() {
+  try {
+    const res = await fetch('/api/load-state');
+    const data = await res.json();
+    if (!res.ok || !data.state || !Array.isArray(data.state.novels) || data.state.novels.length === 0) return;
+    const s = data.state;
+    const localNovels = safeJsonParse(localStorage.getItem('multi_novels'), []);
+    if (localNovels.length === 0) {
+      localStorage.setItem('multi_novels', JSON.stringify(s.novels));
+      state.novels = s.novels;
+    }
+    if (s.activeNovelId) {
+      localStorage.setItem('multi_active_novel_id', s.activeNovelId);
+      state.activeNovelId = s.activeNovelId;
+    }
+    if (s.collapsedNovels) {
+      localStorage.setItem('collapsed_novels', JSON.stringify(s.collapsedNovels));
+      collapsedNovels = s.collapsedNovels;
+    }
+    if (s.apiKey) localStorage.setItem('novel_api_key', s.apiKey);
+    if (s.apiModel) localStorage.setItem('novel_api_model', s.apiModel);
+    if (s.apiUrl) localStorage.setItem('novel_api_url', s.apiUrl);
+    if (s.viewMode) localStorage.setItem('novel_view_mode', s.viewMode);
+    if (s.heartbeatState) {
+      localStorage.setItem('agent_heartbeat_state', JSON.stringify(s.heartbeatState));
+      heartbeatState = s.heartbeatState;
+    }
+  } catch (e) {
+    // 首次运行或服务重启时静默降级
+  }
+}
+
+async function init() {
+  await restoreFromDatabase();
+  
   const activeNovel = getActiveNovel();
   
   renderChapters();
