@@ -21,7 +21,7 @@ const TYPE_METADATA = {
   'location': { name: '地理位置', icon: 'map-pin' },
   'faction': { name: '势力组织', icon: 'users' },
   'system': { name: '力量体系/法则', icon: 'shield' },
-  'main-character': { name: '核心主角（视角锚点）', icon: 'user' },
+  'main-character': { name: '核心主角（视角中心）', icon: 'user' },
   'major-character': { name: '主要人物', icon: 'star' },
   'family-character': { name: '主角家族', icon: 'home' },
   'former-sect-character': { name: '旧宗门人物', icon: 'landmark' },
@@ -41,7 +41,14 @@ const TYPE_METADATA = {
   'event-card': { name: '事件卡（状态机）', icon: 'git-branch' },
   'promise-ledger': { name: '伏笔台账', icon: 'clipboard-list' },
   'state-ledger': { name: '状态台账', icon: 'database' },
-  'faction-plan': { name: '势力计划', icon: 'network' }
+  'faction-plan': { name: '势力计划', icon: 'network' },
+  'volume-outline': { name: '卷级规划', icon: 'layers' },
+  'chapter-outline': { name: '章节细纲', icon: 'list-tree' },
+  'plot-causal-chain': { name: '剧情因果链', icon: 'git-merge' },
+  'plot-timeline': { name: '时空与多线叙事', icon: 'clock-3' },
+  'plot-audit': { name: '剧情审计报告', icon: 'scan-search' },
+  'final-outline': { name: '最终综合大纲', icon: 'book-check' },
+  'final-audit': { name: '全书终审报告', icon: 'badge-check' }
 };
 
 const CHARACTER_TYPE_ORDER = [
@@ -79,7 +86,7 @@ const DEFAULT_CHAPTERS = [
 
 在静水港高耸的尖塔之上，银翼议会的议员们正进行着激烈的争论。面对日益逼近的黑云，有人主张撤离，而有人则坚持启动尘封的防御卫队。
 
-与此同时，凯伦在一条偏僻的巷子里，感受到了体内那股躁动不安的力量。源能的低吟在他耳边盘旋，提醒着他，终局之战即将拉开序幕。
+与此同时，凯伦在一条偏僻的巷子里，感受到了体内那股躁动不安的力量。陌生力量的低鸣在他耳边回荡，提醒着他，终局之战即将拉开序幕。
 `
   },
   {
@@ -98,18 +105,18 @@ const DEFAULT_CHAPTERS = [
 
 const DEFAULT_ASSETS = [
   // 世界观设定
-  { id: 'ws-loc-1', group: 'world-setting', type: 'location', name: '新手村/启动锚点', desc: '故事的起点，为主角提供最初的安全区与新手任务（如：静水港）。' },
+  { id: 'ws-loc-1', group: 'world-setting', type: 'location', name: '新手村/开篇落脚处', desc: '故事的起点，为主角提供最初的安全区与初始事件（如：村落、城镇或宗门外院）。' },
   { id: 'ws-loc-2', group: 'world-setting', type: 'location', name: '核心冲突舞台', desc: '承载中期主线剧情、多方势力交汇的战略要地（如：低语档案馆）。' },
   { id: 'ws-loc-3', group: 'world-setting', type: 'location', name: '高阶禁区/终局之地', desc: '终极秘密的埋藏地，通常与世界观 of 底层逻辑直接挂钩。' },
   { id: 'wf-geo-1', group: 'world-setting', type: 'location', name: '显性地图', desc: '剧情直接发生的物理空间（如：低语档案馆）。' },
   { id: 'wf-geo-2', group: 'world-setting', type: 'location', name: '隐性地图（伏笔位）', desc: '早期被提及但无法进入的区域，通常作为中后期反转的伏笔（如：深渊裂隙）。' },
-  
+
   { id: 'ws-fac-1', group: 'world-setting', type: 'faction', name: '本土/秩序阵营', desc: '维护现有规则或主角最初依附的组织（如：银翼议会）。' },
   { id: 'ws-fac-2', group: 'world-setting', type: 'faction', name: '敌对/反派阵营', desc: '打破现有平衡、制造主要危机的对抗势力（如：风暴使者）。' },
   { id: 'ws-fac-3', group: 'world-setting', type: 'faction', name: '中立/第三方势力', desc: '黑市、佣兵组织或隐世流派，用于调节剧情节奏与情报交汇。' },
   { id: 'wf-fac-1', group: 'world-setting', type: 'faction', name: '明面阵营', desc: '秩序的维护者与挑战者。' },
   { id: 'wf-fac-2', group: 'world-setting', type: 'faction', name: '影子阵营（伏笔位）', desc: '隐藏在历史尘埃中的“第三只手”，负责在关键节点回收前期不合理的逻辑死角。' },
-  
+
   { id: 'ws-sys-1', group: 'world-setting', type: 'system', name: '核心功法/能力路径', desc: '决定个体如何获取超自然力量或社会地位的成长蓝图。' },
   { id: 'ws-sys-2', group: 'world-setting', type: 'system', name: '阶层晋升标准', desc: '清晰的等级划分，用以量化角色的成长，提供长线期待感。' },
   { id: 'cl-rul-1', group: 'world-setting', type: 'system', name: '已知规则', desc: '公开的力量体系等级。' },
@@ -120,17 +127,17 @@ const DEFAULT_ASSETS = [
   { id: 'cg-main-2', group: 'character-growth', type: 'main-character', name: '初始缺陷与金手指', desc: '让人物落地的缺陷，配合打破既定规则的底层逻辑工具。' },
   { id: 'cl-core-1', group: 'character-growth', type: 'main-character', name: '明线动机', desc: '变强、复仇、生存（直接驱动力）。' },
   { id: 'cl-core-2', group: 'character-growth', type: 'main-character', name: '暗线宿命（伏笔位）', desc: '主角身世、体质或随身物品中隐藏的非对称信息，决定了终局的走向。' },
-  
+
   { id: 'cg-supp-1', group: 'character-growth', type: 'supporting-character', name: '导师/伙伴（情感羁绊）', desc: '提供成长指引、情感支持或负责功能性叙事的正面角色。' },
   { id: 'cg-supp-2', group: 'character-growth', type: 'supporting-character', name: '一生之敌（镜像反派）', desc: '价值观与主角完全对立、实力同步成长的核心对抗者。' },
 
   // 主题与核心
-  { id: 'tc-pow-1', group: 'themes-core', type: 'core-power', name: '核心能量源', desc: '这个世界最底层的资源、异能或科技载体（如：源能掌控）。' },
+  { id: 'tc-pow-1', group: 'themes-core', type: 'core-power', name: '核心力量来源', desc: '这个世界最底层的力量、资源与代价机制，必须符合背景设定中的时代和题材。' },
   { id: 'tc-pow-2', group: 'themes-core', type: 'core-power', name: '核心心理奖惩机制', desc: '故事带给读者的核心爽点与情绪价值。' },
-  { id: 'tv-pow-1', group: 'themes-core', type: 'core-power', name: '源能掌控', desc: '设定世界观中最本质的能量交互方式（如：源能、灵气、算力）。' },
+  { id: 'tv-pow-1', group: 'themes-core', type: 'core-power', name: '核心力量运转', desc: '设定世界观中最本质的力量获取、运用与代价规则，具体形式必须服从背景时代。' },
   { id: 'tc-sec-1', group: 'themes-core', type: 'secret-clue', name: '底层埋线（Buried Ledger）', desc: '贯穿全书、涉及世界本质的终极谜题，驱动主角不断打破阶层、探索未知。' },
-  { id: 'tv-sec-1', group: 'themes-core', type: 'secret-clue', name: '世界真相', desc: '所有的伏笔最终都指向同一个终极真相（例如：所谓的神其实是某种高维观测者）。' },
-  { id: 'tv-sec-2', group: 'themes-core', type: 'secret-clue', name: '因果螺旋', desc: '确保每一卷的结尾都回收了前期的伏笔，同时埋下更高维度的钩子，形成螺旋上升的结构。' },
+  { id: 'tv-sec-1', group: 'themes-core', type: 'secret-clue', name: '世界真相', desc: '所有伏笔最终指向同一个符合既定时代、历史与力量规则的终极真相。' },
+  { id: 'tv-sec-2', group: 'themes-core', type: 'secret-clue', name: '因果螺旋', desc: '每一卷结尾回收前期伏笔，同时埋下更深层的疑问，形成逐步升级的因果结构。' },
 
   // 剧情与伏笔（因果线）
   { id: 'pf-out-1', group: 'plot-framework', type: 'main-outline', name: '核心危机（大事件）', desc: '推动整个世界格局走向崩盘或重组的宏观推手。' },
@@ -156,6 +163,13 @@ const DEFAULT_CATEGORY_ORDER = {
     'event-card',
     'promise-ledger',
     'state-ledger',
+    'volume-outline',
+    'chapter-outline',
+    'plot-causal-chain',
+    'plot-timeline',
+    'plot-audit',
+    'final-outline',
+    'final-audit',
     'pace-hooks',
     'planting',
     'payoff'
@@ -191,7 +205,8 @@ let state = {
   activeNovelId: localStorage.getItem('multi_active_novel_id') || 'novel-default',
   apiKey: localStorage.getItem('novel_api_key') || '',
   apiModel: localStorage.getItem('novel_api_model') || 'gemini-2.0-flash',
-  apiUrl: localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com'
+  apiUrl: localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com',
+  viewMode: localStorage.getItem('novel_view_mode') || 'edit'
 };
 if (!Array.isArray(state.novels) || !state.novels.length) {
   state.novels = [migratedDefaultNovel];
@@ -208,6 +223,65 @@ if (!Array.isArray(collapsedNovels)) {
 }
 
 let heartbeatState = safeJsonParse(localStorage.getItem('agent_heartbeat_state'), {}, 'agent_heartbeat_state');
+
+function sanitizeLegacyEnglishLabels(obj) {
+  if (typeof obj === 'string') {
+    let newStr = obj;
+    const targetTranslations = {
+      'faction': '势力组织',
+      'location': '地理位置',
+      'system': '力量体系/法则',
+      'secret-clue': '隐秘线索',
+      'core-power': '核心力量/机制',
+      'main-outline': '主线大纲',
+      'pace-hooks': '节奏与钩子',
+      'planting': '伏笔设置',
+      'payoff': '回收机制',
+      'character': '人物',
+      'promise-ledger': '伏笔台账',
+      'state-ledger': '状态台账',
+      'faction-plan': '势力计划',
+      'volume-outline': '卷级规划',
+      'chapter-outline': '章节细纲',
+      'plot-causal-chain': '剧情因果链',
+      'plot-timeline': '时空与多线叙事',
+      'plot-audit': '剧情审计报告'
+    };
+    for (const [eng, chi] of Object.entries(targetTranslations)) {
+      const regex1 = new RegExp(`【${eng}\\s*[｜|]`, 'g');
+      newStr = newStr.replace(regex1, `【${chi}｜`);
+      
+      const regex2 = new RegExp(`\\[${eng}\\s*[｜|]`, 'g');
+      newStr = newStr.replace(regex2, `[${chi}｜`);
+    }
+    return newStr;
+  } else if (Array.isArray(obj)) {
+    return obj.map(sanitizeLegacyEnglishLabels);
+  } else if (obj !== null && typeof obj === 'object') {
+    const newObj = {};
+    for (const [key, val] of Object.entries(obj)) {
+      newObj[key] = sanitizeLegacyEnglishLabels(val);
+    }
+    return newObj;
+  }
+  return obj;
+}
+
+// 自动对已载入的数据进行英文标签词净化
+let hasSanitization = false;
+state.novels = state.novels.map(novel => {
+  const serialized = JSON.stringify(novel);
+  if (serialized.includes('【faction') || serialized.includes('[faction') ||
+      serialized.includes('【location') || serialized.includes('[location') ||
+      serialized.includes('【system') || serialized.includes('[system')) {
+    hasSanitization = true;
+    return sanitizeLegacyEnglishLabels(novel);
+  }
+  return novel;
+});
+if (hasSanitization) {
+  localStorage.setItem('multi_novels', JSON.stringify(state.novels));
+}
 
 // 强制将现有的及加载的旧格式小说数据转换为全新的8个大类模版和示例项目结构
 let hasMigration = false;
@@ -279,6 +353,23 @@ function saveState() {
   localStorage.setItem('novel_api_key', state.apiKey);
   localStorage.setItem('novel_api_model', state.apiModel);
   localStorage.setItem('novel_api_url', state.apiUrl);
+  localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
+}
+
+function applyViewMode() {
+  const mode = state.viewMode || 'edit';
+  if (mode === 'preview') {
+    elements.modePreview.classList.add('active');
+    elements.modeEdit.classList.remove('active');
+    elements.editorTextarea.classList.add('hidden');
+    elements.editorPreview.classList.remove('hidden');
+    updatePreview();
+  } else {
+    elements.modeEdit.classList.add('active');
+    elements.modePreview.classList.remove('active');
+    elements.editorTextarea.classList.remove('hidden');
+    elements.editorPreview.classList.add('hidden');
+  }
 }
 
 function saveHeartbeatState() {
@@ -316,6 +407,31 @@ const elements = {
   graphSearchInput: document.getElementById('graph-search-input'),
   graphFactionFilter: document.getElementById('graph-faction-filter'),
   graphRelationFilter: document.getElementById('graph-relation-filter'),
+  graphAddRelation: document.getElementById('graph-add-relation'),
+  graphEditModal: document.getElementById('graph-edit-modal'),
+  graphEditTitle: document.getElementById('graph-edit-title'),
+  closeGraphEditModal: document.getElementById('close-graph-edit-modal'),
+  graphCharacterForm: document.getElementById('graph-character-form'),
+  graphCharacterOriginalName: document.getElementById('graph-character-original-name'),
+  graphCharacterName: document.getElementById('graph-character-name'),
+  graphCharacterIdentity: document.getElementById('graph-character-identity'),
+  graphCharacterFaction: document.getElementById('graph-character-faction'),
+  graphCharacterPersonality: document.getElementById('graph-character-personality'),
+  graphCharacterDesire: document.getElementById('graph-character-desire'),
+  graphCharacterGoal: document.getElementById('graph-character-goal'),
+  graphCharacterInterests: document.getElementById('graph-character-interests'),
+  graphCharacterArc: document.getElementById('graph-character-arc'),
+  graphCharacterHighlight: document.getElementById('graph-character-highlight'),
+  graphCharacterFate: document.getElementById('graph-character-fate'),
+  graphRelationForm: document.getElementById('graph-relation-form'),
+  graphRelationIndex: document.getElementById('graph-relation-index'),
+  graphRelationSource: document.getElementById('graph-relation-source'),
+  graphRelationTarget: document.getElementById('graph-relation-target'),
+  graphRelationType: document.getElementById('graph-relation-type'),
+  graphRelationDirection: document.getElementById('graph-relation-direction'),
+  graphRelationDescription: document.getElementById('graph-relation-description'),
+  graphRelationConflict: document.getElementById('graph-relation-conflict'),
+  deleteGraphRelationBtn: document.getElementById('btn-delete-graph-relation'),
   
   activeAssetHeader: document.getElementById('active-asset-header'),
   backToChapterBtn: document.getElementById('back-to-chapter-btn'),
@@ -373,6 +489,18 @@ const elements = {
   characterReviewList: document.getElementById('character-review-list'),
   approveCharactersBtn: document.getElementById('btn-approve-characters'),
   rejectCharactersBtn: document.getElementById('btn-reject-characters'),
+
+  // Plot Review Modal
+  plotReviewModal: document.getElementById('plot-review-modal'),
+  plotReviewTitle: document.getElementById('plot-review-title'),
+  plotReviewSubtitle: document.getElementById('plot-review-subtitle'),
+  plotReviewChapterCount: document.getElementById('plot-review-chapter-count'),
+  plotReviewVolumeCount: document.getElementById('plot-review-volume-count'),
+  plotAuditScore: document.getElementById('plot-audit-score'),
+  plotReviewReport: document.getElementById('plot-review-report'),
+  plotReviewList: document.getElementById('plot-review-list'),
+  approvePlotBtn: document.getElementById('btn-approve-plot'),
+  rejectPlotBtn: document.getElementById('btn-reject-plot'),
 
   // Novel Info Modal
   novelInfoModal: document.getElementById('novel-info-modal'),
@@ -568,7 +696,111 @@ function renderNovels() {
   lucide.createIcons();
 }
 
+function formatPromiseLedger(promiseLedger) {
+  return promiseLedger.map((promise, index) => `## ${index + 1}. ${promise.id}
+- **类型**：${promise.promiseType}
+- **种子事件**：${promise.seedEventId}
+- **预计回收**：${promise.expectedPayoffWindow}
+- **回收事件**：${promise.payoffEventId || '待后续卷回收'}
+- **状态**：${promise.status}
+- **风险**：${promise.risk}
+- **读者问题**：${promise.readerQuestion}`).join('\n\n');
+}
+
+function createPromiseLedgerAsset(promiseLedger, novelId, timestamp = Date.now()) {
+  const paidCount = promiseLedger.filter(promise => promise.status === 'paid').length;
+  return {
+    id: `promise-ledger-summary-${novelId}-${timestamp}`,
+    group: 'plot-framework',
+    type: 'promise-ledger',
+    name: `伏笔台账（${promiseLedger.length}条，已回收${paidCount}条）`,
+    desc: formatPromiseLedger(promiseLedger)
+  };
+}
+
+function consolidatePromiseLedgerAssets(novel) {
+  const assets = novel.assets || [];
+  const individualAssets = assets.filter(asset => asset.name?.startsWith('伏笔台账：'));
+  const summaryAssets = assets.filter(asset => asset.type === 'promise-ledger');
+  const ledger = Array.isArray(novel.promiseLedger) ? novel.promiseLedger : [];
+  if (!individualAssets.length && summaryAssets.length === 1 && ledger.length) {
+    const refreshed = createPromiseLedgerAsset(ledger, novel.id);
+    const current = summaryAssets[0];
+    if (current.name === refreshed.name && current.desc === refreshed.desc) return false;
+    current.name = refreshed.name;
+    current.desc = refreshed.desc;
+    return true;
+  }
+  if (!individualAssets.length && summaryAssets.length <= 1) return false;
+
+  const retainedAssets = assets.filter(asset =>
+    !asset.name?.startsWith('伏笔台账：') &&
+    asset.type !== 'promise-ledger'
+  );
+  if (ledger.length) {
+    retainedAssets.push(createPromiseLedgerAsset(ledger, novel.id));
+  } else if (individualAssets.length) {
+    retainedAssets.push({
+      id: `promise-ledger-summary-${novel.id}-${Date.now()}`,
+      group: 'plot-framework',
+      type: 'promise-ledger',
+      name: `伏笔台账（${individualAssets.length}条）`,
+      desc: individualAssets.map((asset, index) =>
+        `## ${index + 1}. ${asset.name.replace(/^伏笔台账：/, '')}\n${asset.desc}`
+      ).join('\n\n')
+    });
+  } else if (summaryAssets[0]) {
+    retainedAssets.push(summaryAssets[0]);
+  }
+  novel.assets = retainedAssets;
+  return true;
+}
+
+function ensureCharacterDerivedAssets(novel) {
+  const characters = Array.isArray(novel.characterBible) ? novel.characterBible : [];
+  if (!characters.length) return false;
+
+  let changed = false;
+  const seenNames = new Set();
+  novel.assets = (novel.assets || []).filter(asset => {
+    if (!asset.characterName) return true;
+    if (!characters.some(character => character.name === asset.characterName)) {
+      changed = true;
+      return false;
+    }
+    if (seenNames.has(asset.characterName)) {
+      changed = true;
+      return false;
+    }
+    seenNames.add(asset.characterName);
+    return true;
+  });
+
+  characters.forEach((character, index) => {
+    const existing = novel.assets.find(asset => asset.characterName === character.name);
+    if (existing) {
+      existing.characterData = character;
+      return;
+    }
+    novel.assets.push(characterToAsset(character, novel.id, index));
+    changed = true;
+  });
+
+  if (!novel.assets.some(asset => asset.type === 'character-network')) {
+    novel.assets.push(topologyToAsset(novel.characterRelations || [], novel.id));
+    changed = true;
+  }
+  return changed;
+}
+
 function renderAssetsForNovel(novel, sectionContentDiv) {
+  const promiseLedgerChanged = consolidatePromiseLedgerAssets(novel);
+  const characterAssetsChanged = ensureCharacterDerivedAssets(novel);
+  if (promiseLedgerChanged || characterAssetsChanged) {
+    refreshNovelKnowledgeGraph(novel);
+    saveState();
+    void persistNovelKnowledgeGraph(novel);
+  }
   // Ensure categoryOrder is initialized
   if (!novel.categoryOrder) {
     novel.categoryOrder = cloneDefault(DEFAULT_CATEGORY_ORDER);
@@ -631,6 +863,11 @@ function renderAssetsForNovel(novel, sectionContentDiv) {
 
     sortedTypes.forEach(typeKey => {
       const assetsList = groupTypes[typeKey];
+      const derivedPlotTypes = new Set([
+        'volume-outline', 'chapter-outline', 'plot-causal-chain', 'plot-timeline',
+        'plot-audit', 'final-outline', 'final-audit'
+      ]);
+      if (derivedPlotTypes.has(typeKey) && assetsList.length === 0) return;
       const metadata = TYPE_METADATA[typeKey] || { name: typeKey, icon: 'tag' };
       
       const subGroupDiv = document.createElement('div');
@@ -812,15 +1049,18 @@ function switchEditorTarget(type, id) {
   const activeNovel = getActiveNovel();
   if (!activeNovel) return;
 
+  closeActivePopover();
+
   activeNovel.activeTarget = { type, id };
   saveState();
 
+  document.querySelectorAll('.asset-item').forEach(item => {
+    item.classList.toggle('active', type === 'asset' && item.dataset.id === id);
+  });
+
   if (type === 'chapter') {
     elements.knowledgeGraphView.classList.add('hidden');
-    elements.editorTextarea.classList.remove('hidden');
-    elements.editorPreview.classList.add('hidden');
-    elements.modeEdit.classList.add('active');
-    elements.modePreview.classList.remove('active');
+    applyViewMode();
     elements.chapterSelect.classList.remove('hidden');
     elements.addChapterBtn.classList.remove('hidden');
     elements.activeAssetHeader.classList.add('hidden');
@@ -845,10 +1085,7 @@ function switchEditorTarget(type, id) {
         return;
       }
       elements.knowledgeGraphView.classList.add('hidden');
-      elements.editorTextarea.classList.remove('hidden');
-      elements.editorPreview.classList.add('hidden');
-      elements.modeEdit.classList.add('active');
-      elements.modePreview.classList.remove('active');
+      applyViewMode();
       const typeMetadata = {
         'location': '地理位置',
         'faction': '势力组织',
@@ -869,6 +1106,325 @@ function getFactionColor(faction, factionIndex) {
 }
 
 let characterGraphTransform = { x: 0, y: 0, scale: 1 };
+
+function calculateCharacterGraphLayout(characters, relations, factions) {
+  const width = 880;
+  const height = 760;
+  const center = { x: width / 2, y: height / 2 };
+  const degree = new Map(characters.map(character => [character.name, 0]));
+  relations.forEach(relation => {
+    degree.set(relation.source, (degree.get(relation.source) || 0) + 1);
+    degree.set(relation.target, (degree.get(relation.target) || 0) + 1);
+  });
+  const anchors = new Map();
+  factions.forEach((faction, index) => {
+    if (factions.length === 1) {
+      anchors.set(faction, center);
+      return;
+    }
+    const angle = (Math.PI * 2 * index) / Math.max(factions.length, 1) - Math.PI / 2;
+    anchors.set(faction, {
+      x: center.x + Math.cos(angle) * 265,
+      y: center.y + Math.sin(angle) * 265
+    });
+  });
+  const positions = new Map();
+  const orderedCharacters = [...characters].sort((a, b) =>
+    (degree.get(b.name) || 0) - (degree.get(a.name) || 0) || a.name.localeCompare(b.name)
+  );
+  orderedCharacters.forEach((character, index) => {
+    const faction = character.faction || '未归属';
+    const anchor = anchors.get(faction) || center;
+    const factionMembers = orderedCharacters.filter(item => (item.faction || '未归属') === faction);
+    const memberIndex = factionMembers.findIndex(item => item.name === character.name);
+    const angle = memberIndex * 2.399963229728653;
+    const radius = 22 + Math.sqrt(memberIndex) * 34;
+    const centrality = Math.min(0.42, (degree.get(character.name) || 0) / Math.max(relations.length, 1));
+    positions.set(character.name, {
+      x: anchor.x + Math.cos(angle) * radius + (center.x - anchor.x) * centrality,
+      y: anchor.y + Math.sin(angle) * radius + (center.y - anchor.y) * centrality,
+      vx: 0,
+      vy: 0
+    });
+  });
+
+  const relationPairs = relations
+    .map(relation => ({
+      source: positions.get(relation.source),
+      target: positions.get(relation.target)
+    }))
+    .filter(pair => pair.source && pair.target);
+  const minimumDistance = characters.length > 55 ? 42 : 50;
+  for (let iteration = 0; iteration < 240; iteration += 1) {
+    const cooling = 1 - iteration / 260;
+    for (let i = 0; i < orderedCharacters.length; i += 1) {
+      const first = positions.get(orderedCharacters[i].name);
+      for (let j = i + 1; j < orderedCharacters.length; j += 1) {
+        const second = positions.get(orderedCharacters[j].name);
+        let dx = second.x - first.x;
+        let dy = second.y - first.y;
+        let distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared < 0.01) {
+          dx = (j % 2 ? 1 : -1) * 0.1;
+          dy = (i % 2 ? 1 : -1) * 0.1;
+          distanceSquared = 0.02;
+        }
+        const distance = Math.sqrt(distanceSquared);
+        const collisionBoost = distance < minimumDistance ? 4.8 : 1;
+        const force = Math.min(5, (1050 * collisionBoost) / distanceSquared) * cooling;
+        const fx = (dx / distance) * force;
+        const fy = (dy / distance) * force;
+        first.vx -= fx;
+        first.vy -= fy;
+        second.vx += fx;
+        second.vy += fy;
+      }
+    }
+    relationPairs.forEach(({ source, target }) => {
+      const dx = target.x - source.x;
+      const dy = target.y - source.y;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const desired = 105;
+      const force = (distance - desired) * 0.008 * cooling;
+      const fx = (dx / distance) * force;
+      const fy = (dy / distance) * force;
+      source.vx += fx;
+      source.vy += fy;
+      target.vx -= fx;
+      target.vy -= fy;
+    });
+    orderedCharacters.forEach(character => {
+      const position = positions.get(character.name);
+      const factionAnchor = anchors.get(character.faction || '未归属') || center;
+      const characterDegree = degree.get(character.name) || 0;
+      const corePull = character.roleTier === '核心主角' || characterDegree >= 8 ? 0.012 : 0;
+      position.vx += (factionAnchor.x - position.x) * 0.004 * cooling;
+      position.vy += (factionAnchor.y - position.y) * 0.004 * cooling;
+      position.vx += (center.x - position.x) * corePull * cooling;
+      position.vy += (center.y - position.y) * corePull * cooling;
+      position.vx *= 0.78;
+      position.vy *= 0.78;
+      position.x = Math.max(42, Math.min(width - 42, position.x + position.vx));
+      position.y = Math.max(42, Math.min(height - 42, position.y + position.vy));
+    });
+  }
+  return { positions, degree, width, height };
+}
+
+function getCharacterGraphCurve(source, target, relationIndex) {
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const bend = ((relationIndex % 5) - 2) * Math.min(11, distance * 0.035);
+  const controlX = (source.x + target.x) / 2 - (dy / distance) * bend;
+  const controlY = (source.y + target.y) / 2 + (dx / distance) * bend;
+  return `M ${source.x} ${source.y} Q ${controlX} ${controlY} ${target.x} ${target.y}`;
+}
+
+function replaceNameInStructuredValue(value, oldName, newName) {
+  if (typeof value === 'string') return value.split(oldName).join(newName);
+  if (Array.isArray(value)) return value.map(item => replaceNameInStructuredValue(item, oldName, newName));
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach(key => {
+      value[key] = replaceNameInStructuredValue(value[key], oldName, newName);
+    });
+  }
+  return value;
+}
+
+function syncEmbeddedCharacterRelationships(novel) {
+  const relations = novel.characterRelations || [];
+  (novel.characterBible || []).forEach(character => {
+    character.relationships = relations
+      .filter(relation => relation.source === character.name || relation.target === character.name)
+      .map(relation => {
+        const outgoing = relation.source === character.name;
+        return {
+          target: outgoing ? relation.target : relation.source,
+          type: relation.type,
+          dynamic: relation.description,
+          conflict: relation.interestConflict
+        };
+      });
+  });
+}
+
+function rebuildDerivedCharacterAssets(novel) {
+  const characterAssetsByName = new Map(
+    (novel.assets || [])
+      .filter(asset => asset.characterName)
+      .map(asset => [asset.characterName, asset])
+  );
+  (novel.characterBible || []).forEach((character, index) => {
+    const existing = characterAssetsByName.get(character.name);
+    const rebuilt = characterToAsset(character, novel.id, index);
+    if (existing) {
+      existing.name = rebuilt.name;
+      existing.type = rebuilt.type;
+      existing.desc = rebuilt.desc;
+      existing.characterName = character.name;
+      existing.characterData = character;
+    }
+  });
+  refreshTopologyAsset(novel);
+  if (novel.plotBlueprint) {
+    const plotTypes = new Set(['volume-outline', 'chapter-outline', 'plot-causal-chain', 'plot-timeline', 'plot-audit']);
+    const plotResult = {
+      chapterCount: novel.plotBlueprint.chapterCount,
+      architecture: novel.plotBlueprint.architecture,
+      chapters: novel.plotBlueprint.chapters,
+      audit: novel.plotBlueprint.audit
+    };
+    novel.assets = [
+      ...novel.assets.filter(asset => !plotTypes.has(asset.type)),
+      ...plotSystemToAssets(plotResult, novel.id)
+    ];
+  }
+}
+
+function commitGraphEdit(novel) {
+  novel.assets = (novel.assets || []).filter(asset => !['final-outline', 'final-audit'].includes(asset.type));
+  novel.finalAudit = null;
+  novel.finalOutline = null;
+  syncEmbeddedCharacterRelationships(novel);
+  rebuildDerivedCharacterAssets(novel);
+  refreshNovelKnowledgeGraph(novel);
+  saveState();
+  void persistNovelKnowledgeGraph(novel);
+  renderNovels();
+  renderCharacterGraph(novel);
+}
+
+function updateCharacterGlobally(novel, oldName, updates) {
+  const newName = String(updates.name || oldName).trim();
+  if (!newName) throw new Error('人物姓名不能为空。');
+  if (newName !== oldName && novel.characterBible.some(character => character.name === newName)) {
+    throw new Error(`人物姓名“${newName}”已存在。`);
+  }
+  const character = novel.characterBible.find(item => item.name === oldName);
+  if (!character) throw new Error(`未找到人物：${oldName}`);
+
+  if (newName !== oldName) {
+    ['background', 'synopsis', 'analysisSummary'].forEach(field => {
+      novel[field] = replaceNameInStructuredValue(novel[field], oldName, newName);
+    });
+    replaceNameInStructuredValue(novel.masterOutline, oldName, newName);
+    replaceNameInStructuredValue(novel.narrativeKernel, oldName, newName);
+    replaceNameInStructuredValue(novel.eventCards, oldName, newName);
+    replaceNameInStructuredValue(novel.promiseLedger, oldName, newName);
+    replaceNameInStructuredValue(novel.stateLedger, oldName, newName);
+    replaceNameInStructuredValue(novel.factionPlans, oldName, newName);
+    replaceNameInStructuredValue(novel.plotBlueprint, oldName, newName);
+    replaceNameInStructuredValue(novel.plotBlueprintDraft, oldName, newName);
+    replaceNameInStructuredValue(novel.chapters, oldName, newName);
+    replaceNameInStructuredValue(novel.characterAudit, oldName, newName);
+    replaceNameInStructuredValue(novel.outlineAudit, oldName, newName);
+    (novel.assets || []).forEach(asset => {
+      asset.name = replaceNameInStructuredValue(asset.name, oldName, newName);
+      asset.desc = replaceNameInStructuredValue(asset.desc, oldName, newName);
+      if (asset.characterName === oldName) asset.characterName = newName;
+    });
+    (novel.characterRelations || []).forEach(relation => {
+      if (relation.source === oldName) relation.source = newName;
+      if (relation.target === oldName) relation.target = newName;
+      relation.description = replaceNameInStructuredValue(relation.description, oldName, newName);
+      relation.interestConflict = replaceNameInStructuredValue(relation.interestConflict, oldName, newName);
+    });
+    const asset = novel.assets.find(item => item.characterName === oldName);
+    if (asset) asset.characterName = newName;
+  }
+  Object.assign(character, updates, { name: newName });
+  commitGraphEdit(novel);
+}
+
+function updateRelationGlobally(novel, relationIndex, updates) {
+  const relations = novel.characterRelations || [];
+  if (updates.source === updates.target) throw new Error('关系双方不能是同一人物。');
+  const names = new Set((novel.characterBible || []).map(character => character.name));
+  if (!names.has(updates.source) || !names.has(updates.target)) {
+    throw new Error('关系双方必须来自现有人物库。');
+  }
+  if (relationIndex < 0) {
+    const duplicate = relations.some(relation =>
+      relation.source === updates.source &&
+      relation.target === updates.target &&
+      relation.type === updates.type
+    );
+    if (duplicate) throw new Error('相同人物与关系类型已经存在。');
+    relations.push(updates);
+  } else {
+    const relation = relations[relationIndex];
+    if (!relation) throw new Error('未找到要修改的关系。');
+    const replacements = [
+      [relation.description, updates.description],
+      [relation.interestConflict, updates.interestConflict]
+    ].filter(([from, to]) => from && to && from !== to);
+    replacements.forEach(([from, to]) => {
+      replaceNameInStructuredValue(novel.eventCards, from, to);
+      replaceNameInStructuredValue(novel.plotBlueprint, from, to);
+      replaceNameInStructuredValue(novel.plotBlueprintDraft, from, to);
+      (novel.assets || []).forEach(asset => {
+        asset.desc = String(asset.desc || '').split(from).join(to);
+      });
+    });
+    Object.assign(relation, updates);
+  }
+  if (novel.plotBlueprint) {
+    novel.plotBlueprint.relationshipCanon = relations.map(relation => ({ ...relation }));
+  }
+  if (novel.plotBlueprintDraft) {
+    novel.plotBlueprintDraft.relationshipCanon = relations.map(relation => ({ ...relation }));
+  }
+  commitGraphEdit(novel);
+}
+
+function openCharacterGraphEditor(character) {
+  elements.graphEditTitle.textContent = `编辑人物：${character.name}`;
+  elements.graphRelationForm.classList.add('hidden');
+  elements.graphCharacterForm.classList.remove('hidden');
+  elements.graphCharacterOriginalName.value = character.name;
+  elements.graphCharacterName.value = character.name;
+  elements.graphCharacterIdentity.value = character.identity || '';
+  elements.graphCharacterFaction.value = character.faction || '';
+  elements.graphCharacterPersonality.value = character.personality || '';
+  elements.graphCharacterDesire.value = character.desire || '';
+  elements.graphCharacterGoal.value = character.goal || '';
+  elements.graphCharacterInterests.value = character.interests || '';
+  elements.graphCharacterArc.value = character.arc || '';
+  elements.graphCharacterHighlight.value = character.highlight || '';
+  elements.graphCharacterFate.value = character.fate || '';
+  elements.graphEditModal.classList.remove('hidden');
+}
+
+function openRelationGraphEditor(novel, relationIndex) {
+  const relation = novel.characterRelations[relationIndex] || {
+    source: novel.characterBible[0]?.name || '',
+    target: novel.characterBible[1]?.name || '',
+    type: '利益关联',
+    direction: '双向',
+    description: '',
+    interestConflict: ''
+  };
+  const options = novel.characterBible.map(character =>
+    `<option value="${escapeHtml(character.name)}">${escapeHtml(character.name)}</option>`
+  ).join('');
+  elements.graphEditTitle.textContent = relationIndex < 0
+    ? '新增人物关系'
+    : `编辑关系：${relation.source} → ${relation.target}`;
+  elements.graphCharacterForm.classList.add('hidden');
+  elements.graphRelationForm.classList.remove('hidden');
+  elements.graphRelationIndex.value = relationIndex;
+  elements.graphRelationSource.innerHTML = options;
+  elements.graphRelationTarget.innerHTML = options;
+  elements.graphRelationSource.value = relation.source;
+  elements.graphRelationTarget.value = relation.target;
+  elements.graphRelationType.value = relation.type || '';
+  elements.graphRelationDirection.value = relation.direction || '双向';
+  elements.graphRelationDescription.value = relation.description || '';
+  elements.graphRelationConflict.value = relation.interestConflict || '';
+  elements.deleteGraphRelationBtn.classList.toggle('hidden', relationIndex < 0);
+  elements.graphEditModal.classList.remove('hidden');
+}
 
 function renderCharacterGraph(novel) {
   const characters = novel.characterBible || [];
@@ -905,50 +1461,83 @@ function renderCharacterGraph(novel) {
     visibleNames.has(relation.target) &&
     (!elements.graphRelationFilter.value || relation.type === elements.graphRelationFilter.value)
   );
+  const visibleFactions = [...new Set(visibleCharacters.map(character => character.faction || '未归属'))];
   const factionMap = new Map(factions.map((faction, index) => [faction, index]));
-  const positions = new Map();
-  const centerX = 520;
-  const centerY = 380;
-  const factionRadius = Math.min(300, 165 + factions.length * 12);
-
-  factions.forEach((faction, factionIndex) => {
-    const members = visibleCharacters.filter(character => (character.faction || '未归属') === faction);
-    if (!members.length) return;
-    const factionAngle = (Math.PI * 2 * factionIndex) / factions.length - Math.PI / 2;
-    const clusterX = centerX + Math.cos(factionAngle) * factionRadius;
-    const clusterY = centerY + Math.sin(factionAngle) * factionRadius;
-    const memberRadius = Math.max(55, Math.min(150, members.length * 10));
-    members.forEach((character, memberIndex) => {
-      const angle = (Math.PI * 2 * memberIndex) / Math.max(members.length, 1);
-      positions.set(character.name, {
-        x: clusterX + Math.cos(angle) * memberRadius,
-        y: clusterY + Math.sin(angle) * memberRadius
-      });
-    });
-  });
+  const { positions, degree } = calculateCharacterGraphLayout(
+    visibleCharacters,
+    visibleRelations,
+    visibleFactions
+  );
 
   const viewport = document.createElementNS(namespace, 'g');
   viewport.setAttribute('class', 'graph-viewport');
+  const factionLayer = document.createElementNS(namespace, 'g');
   const edgeLayer = document.createElementNS(namespace, 'g');
   const nodeLayer = document.createElementNS(namespace, 'g');
   const edgeElements = [];
+  visibleFactions.forEach(faction => {
+    const members = visibleCharacters
+      .filter(character => (character.faction || '未归属') === faction)
+      .map(character => positions.get(character.name))
+      .filter(Boolean);
+    if (!members.length) return;
+    const centroid = {
+      x: members.reduce((sum, member) => sum + member.x, 0) / members.length,
+      y: members.reduce((sum, member) => sum + member.y, 0) / members.length
+    };
+    const radiusX = Math.max(52, Math.max(...members.map(member => Math.abs(member.x - centroid.x))) + 38);
+    const radiusY = Math.max(42, Math.max(...members.map(member => Math.abs(member.y - centroid.y))) + 34);
+    const region = document.createElementNS(namespace, 'ellipse');
+    region.setAttribute('class', 'graph-faction-region');
+    region.setAttribute('cx', centroid.x);
+    region.setAttribute('cy', centroid.y);
+    region.setAttribute('rx', radiusX);
+    region.setAttribute('ry', radiusY);
+    region.setAttribute('stroke', getFactionColor(faction, factionMap.get(faction) || 0));
+    factionLayer.appendChild(region);
+    const factionLabel = document.createElementNS(namespace, 'text');
+    factionLabel.setAttribute('class', 'graph-faction-label');
+    factionLabel.setAttribute('x', centroid.x);
+    factionLabel.setAttribute('y', Math.max(18, centroid.y - radiusY + 16));
+    factionLabel.textContent = `${faction} · ${members.length}人`;
+    factionLayer.appendChild(factionLabel);
+  });
   visibleRelations.forEach(relation => {
     const source = positions.get(relation.source);
     const target = positions.get(relation.target);
     if (!source || !target) return;
-    const line = document.createElementNS(namespace, 'line');
-    line.setAttribute('x1', source.x);
-    line.setAttribute('y1', source.y);
-    line.setAttribute('x2', target.x);
-    line.setAttribute('y2', target.y);
-    line.setAttribute('class', 'graph-edge');
-    line.dataset.source = relation.source;
-    line.dataset.target = relation.target;
+    const relationIndex = relations.indexOf(relation);
+    const path = document.createElementNS(namespace, 'path');
+    path.setAttribute('d', getCharacterGraphCurve(source, target, relationIndex));
+    path.setAttribute('class', 'graph-edge');
+    path.dataset.source = relation.source;
+    path.dataset.target = relation.target;
+    path.dataset.relationIndex = relationIndex;
     const title = document.createElementNS(namespace, 'title');
     title.textContent = `${relation.source} → ${relation.target}：${relation.type}`;
-    line.appendChild(title);
-    edgeLayer.appendChild(line);
-    edgeElements.push(line);
+    path.appendChild(title);
+    path.addEventListener('click', event => {
+      event.stopPropagation();
+      edgeElements.forEach(edge => edge.classList.remove('selected'));
+      nodeLayer.querySelectorAll('.graph-node').forEach(node => node.classList.remove('selected'));
+      path.classList.add('selected');
+      elements.graphNodeDetail.innerHTML = `
+        <h3>${escapeHtml(relation.source)} → ${escapeHtml(relation.target)}</h3>
+        <div class="detail-faction">${escapeHtml(relation.type)} · ${escapeHtml(relation.direction)}</div>
+        <dl>
+          <div><dt>关系现状与变化</dt><dd>${escapeHtml(relation.description)}</dd></div>
+          <div><dt>利益交集或冲突</dt><dd>${escapeHtml(relation.interestConflict)}</dd></div>
+        </dl>
+        <div class="graph-detail-actions">
+          <button type="button" class="btn btn-primary" data-edit-relation="${relations.indexOf(relation)}">编辑关系</button>
+        </div>
+      `;
+      elements.graphNodeDetail.querySelector('[data-edit-relation]')?.addEventListener('click', () => {
+        openRelationGraphEditor(novel, relations.indexOf(relation));
+      });
+    });
+    edgeLayer.appendChild(path);
+    edgeElements.push(path);
   });
 
   visibleCharacters.forEach(character => {
@@ -959,13 +1548,18 @@ function renderCharacterGraph(novel) {
     group.setAttribute('transform', `translate(${position.x} ${position.y})`);
     group.dataset.name = character.name;
 
+    const characterDegree = degree.get(character.name) || 0;
+    const nodeRadius = character.roleTier === '核心主角'
+      ? 20
+      : Math.min(17, 11 + characterDegree * 0.55);
     const circle = document.createElementNS(namespace, 'circle');
-    circle.setAttribute('r', character.roleTier === '核心主角' ? '18' : '13');
+    circle.setAttribute('r', nodeRadius);
     circle.setAttribute('fill', getFactionColor(character.faction, factionMap.get(character.faction) || 0));
     group.appendChild(circle);
 
     const label = document.createElementNS(namespace, 'text');
-    label.setAttribute('y', character.roleTier === '核心主角' ? '32' : '27');
+    const labelAbove = position.y > 650 || (position.y > 350 && position.x < 440);
+    label.setAttribute('y', labelAbove ? -(nodeRadius + 8) : nodeRadius + 16);
     label.textContent = character.name;
     group.appendChild(label);
 
@@ -991,16 +1585,23 @@ function renderCharacterGraph(novel) {
           <div><dt>人物弧光</dt><dd>${escapeHtml(character.arc)}</dd></div>
           <div><dt>高光时刻</dt><dd>${escapeHtml(character.highlight)}</dd></div>
           <div><dt>最终结局</dt><dd>${escapeHtml(character.fate)}</dd></div>
-          <div><dt>总纲锚点</dt><dd>${escapeHtml(character.plotAnchor)}</dd></div>
+          <div><dt>总纲对应情节</dt><dd>${escapeHtml(character.plotAnchor)}</dd></div>
           <div><dt>设定依据</dt><dd>${escapeHtml(character.settingBasis)}</dd></div>
           <div><dt>伏笔与回收</dt><dd>${escapeHtml(character.foreshadowLink)}</dd></div>
           <div><dt>欲望与目标</dt><dd>${escapeHtml(character.desire)}；${escapeHtml(character.goal)}</dd></div>
           <div><dt>利益与主动性</dt><dd>${escapeHtml(character.interests)}；${escapeHtml(character.agency)}</dd></div>
         </dl>
+        <div class="graph-detail-actions">
+          <button type="button" class="btn btn-primary" data-edit-character="${escapeHtml(character.name)}">编辑人物</button>
+        </div>
       `;
+      elements.graphNodeDetail.querySelector('[data-edit-character]')?.addEventListener('click', () => {
+        openCharacterGraphEditor(character);
+      });
     });
     nodeLayer.appendChild(group);
   });
+  viewport.appendChild(factionLayer);
   viewport.appendChild(edgeLayer);
   viewport.appendChild(nodeLayer);
   svg.appendChild(viewport);
@@ -1016,7 +1617,7 @@ function renderCharacterGraph(novel) {
   let dragging = false;
   let lastPoint = null;
   svg.onpointerdown = event => {
-    if (event.target.closest('.graph-node')) return;
+    if (event.target.closest('.graph-node') || event.target.closest('.graph-edge')) return;
     dragging = true;
     lastPoint = { x: event.clientX, y: event.clientY };
     svg.setPointerCapture(event.pointerId);
@@ -1044,7 +1645,7 @@ function renderCharacterGraph(novel) {
 
   elements.graphSummary.textContent =
     `${visibleCharacters.length}/${characters.length} 人 · ${visibleRelations.length}/${relations.length} 条关系 · ${factions.length} 个势力`;
-  elements.graphNodeDetail.innerHTML = '<span>点击人物节点查看身份、势力、主要经历、结局、人物弧光、高光与性格。</span>';
+  elements.graphNodeDetail.innerHTML = '<span>点击人物节点查看并编辑人物；点击关系连线查看并编辑关系。修改会同步到人物库、章节细纲和知识图谱。</span>';
 }
 
 function loadCurrentChapter() {
@@ -1060,9 +1661,327 @@ function loadCurrentChapter() {
   }
 }
 
+let activePopover = null;
+
+function closeActivePopover() {
+  if (activePopover) {
+    activePopover.remove();
+    activePopover = null;
+  }
+}
+
+function getFriendlyRefLabel(activeNovel, refType, refId, refNum, matchedText) {
+  if (!activeNovel) return matchedText;
+  
+  if (refType === 'chapter-outline') {
+    const chNum = parseInt(refNum, 10);
+    const chapter = activeNovel.plotBlueprint?.chapters?.find(ch => parseInt(ch.chapterNumber, 10) === chNum);
+    if (chapter) {
+      const hasPrefix = matchedText.includes('前置章节：');
+      const prefix = hasPrefix ? '前置章节：' : '';
+      return `${prefix}第${chNum}章《${chapter.title}》`;
+    }
+  } else if (refType === 'thread') {
+    const thread = activeNovel.plotBlueprint?.architecture?.narrativeThreads?.find(t => 
+      t.id.toLowerCase() === refId.toLowerCase() || t.id.toLowerCase() === `thread-${refNum}`
+    );
+    if (thread) {
+      const hasPrefix = matchedText.includes('叙事线：');
+      const prefix = hasPrefix ? '叙事线：' : '';
+      return `${prefix}${thread.name}线`;
+    }
+  } else if (refType === 'promise') {
+    const promise = activeNovel.promiseLedger?.find(p => 
+      p.id.toLowerCase() === refId.toLowerCase() || p.id.toLowerCase() === `promise-${refNum}`
+    );
+    if (promise) {
+      let prefix = '';
+      if (matchedText.includes('埋设伏笔：')) prefix = '埋设伏笔：';
+      else if (matchedText.includes('回收伏笔：')) prefix = '回收伏笔：';
+      else if (matchedText.includes('埋伏笔：')) prefix = '埋伏笔：';
+      
+      const brief = promise.readerQuestion ? ` (${promise.readerQuestion.slice(0, 10)}...)` : '';
+      return `${prefix}伏笔：${promise.id}${brief}`;
+    }
+  }
+  
+  return matchedText;
+}
+
+function enrichReferenceLinks(htmlString) {
+  if (!htmlString) return htmlString;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  const activeNovel = getActiveNovel();
+  
+  const skipTags = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'A']);
+  
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.nodeValue;
+      const regex = /(?:前置章节：|叙事线：|埋伏笔：|种子事件：|回收伏笔：|埋设伏笔：)?(chapter-outline-\d+|thread-\d+|promise-\d+)/g;
+      
+      if (regex.test(text)) {
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        regex.lastIndex = 0;
+        
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          const matchText = match[0];
+          const refId = match[1];
+          const startIndex = match.index;
+          
+          if (startIndex > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex, startIndex)));
+          }
+          
+          const badge = document.createElement('span');
+          badge.className = 'ref-badge';
+          
+          let refType = '';
+          let refNum = '';
+          if (refId.startsWith('chapter-outline-')) {
+            refType = 'chapter-outline';
+            refNum = refId.replace('chapter-outline-', '');
+            badge.classList.add('badge-chapter');
+          } else if (refId.startsWith('thread-')) {
+            refType = 'thread';
+            refNum = refId.replace('thread-', '');
+            badge.classList.add('badge-thread');
+          } else if (refId.startsWith('promise-')) {
+            refType = 'promise';
+            refNum = refId.replace('promise-', '');
+            badge.classList.add('badge-promise');
+          }
+          
+          badge.dataset.refType = refType;
+          badge.dataset.refId = refId;
+          badge.dataset.refNum = refNum;
+          badge.textContent = getFriendlyRefLabel(activeNovel, refType, refId, refNum, matchText);
+          
+          fragment.appendChild(badge);
+          lastIndex = regex.lastIndex;
+        }
+        
+        if (lastIndex < text.length) {
+          fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+        
+        node.parentNode.replaceChild(fragment, node);
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE && !skipTags.has(node.tagName)) {
+      const children = Array.from(node.childNodes);
+      children.forEach(walk);
+    }
+  }
+  
+  Array.from(doc.body.childNodes).forEach(walk);
+  return doc.body.innerHTML;
+}
+
+function getRefDetails(activeNovel, refType, refId, refNum) {
+  if (!activeNovel) return null;
+  
+  if (refType === 'chapter-outline') {
+    const chNum = parseInt(refNum, 10);
+    const chapter = activeNovel.plotBlueprint?.chapters?.find(ch => parseInt(ch.chapterNumber, 10) === chNum);
+    if (chapter) {
+      return {
+        title: `第 ${chNum} 章：${chapter.title}`,
+        badge: '章节细纲',
+        badgeClass: 'badge-chapter',
+        body: `**时空**：${chapter.time} ｜ ${chapter.location}
+**视角**：${chapter.viewpoint}
+**目标**：${chapter.characterGoal}
+**行动**：${chapter.characterAction}
+**冲突**：${chapter.conflict}
+**梗概**：${chapter.plotSummary}
+**转折与代价**：${chapter.turn} ｜ ${chapter.cost}
+**信息与关系变化**：${chapter.knowledgeDelta} ｜ ${chapter.relationshipDelta}
+**状态变化**：${chapter.stateDelta}
+**因果理由**：${chapter.causalReason}`,
+        targetId: `chapter-outline-${activeNovel.id}-${chNum}`
+      };
+    }
+  } else if (refType === 'thread') {
+    const thread = activeNovel.plotBlueprint?.architecture?.narrativeThreads?.find(t => 
+      t.id.toLowerCase() === refId.toLowerCase() || t.id.toLowerCase() === `thread-${refNum}`
+    );
+    if (thread) {
+      return {
+        title: `叙事线：${thread.name}`,
+        badge: '叙事线',
+        badgeClass: 'badge-thread',
+        body: `**驱动角色**：${thread.driverCharacters.join('、') || '无'}
+**起止状态**：${thread.startState} → ${thread.endState}
+**与其他线交汇点**：${thread.intersections.join('；') || '无'}`,
+        targetType: 'plot-timeline'
+      };
+    }
+  } else if (refType === 'promise') {
+    const promise = activeNovel.promiseLedger?.find(p => 
+      p.id.toLowerCase() === refId.toLowerCase() || p.id.toLowerCase() === `promise-${refNum}`
+    );
+    if (promise) {
+      return {
+        title: `伏笔：${promise.id}`,
+        badge: '伏笔台账',
+        badgeClass: 'badge-promise',
+        body: `**类型**：${promise.promiseType}
+**读者疑问**：${promise.readerQuestion}
+**预计回收**：${promise.expectedPayoffWindow}
+**状态与风险**：状态 ${promise.status} ｜ 风险 ${promise.risk}
+**种子事件**：${promise.seedEventId || '无'}
+**回收事件**：${promise.payoffEventId || '暂无'}`,
+        targetType: 'promise-ledger'
+      };
+    }
+  }
+  
+  const asset = activeNovel.assets?.find(a => 
+    a.id === refId || 
+    (refType === 'chapter-outline' && a.type === 'chapter-outline' && (a.id.includes(`-${refNum}-`) || a.id.endsWith(`-${refNum}`))) ||
+    (refType === 'promise' && a.type === 'promise-ledger')
+  );
+  if (asset) {
+    return {
+      title: asset.name,
+      badge: TYPE_METADATA[asset.type]?.name || asset.type,
+      badgeClass: `badge-${refType}`,
+      body: asset.desc.substring(0, 350) + (asset.desc.length > 350 ? '...' : ''),
+      targetId: asset.id
+    };
+  }
+  
+  return null;
+}
+
+function jumpToReference(activeNovel, refType, refId, refNum, details) {
+  let targetId = details.targetId;
+  let targetType = details.targetType;
+  
+  let assetToSelect = null;
+  if (targetId) {
+    assetToSelect = activeNovel.assets.find(a => a.id === targetId);
+    if (!assetToSelect && refType === 'chapter-outline') {
+      assetToSelect = activeNovel.assets.find(a => a.type === 'chapter-outline' && (a.id.includes(`-outline-${activeNovel.id}-${refNum}-`) || a.id.endsWith(`-${refNum}`)));
+      if (!assetToSelect) {
+        const paddedNum = String(refNum).padStart(3, '0');
+        assetToSelect = activeNovel.assets.find(a => a.type === 'chapter-outline' && a.name.startsWith(paddedNum));
+      }
+    }
+  } else if (targetType) {
+    assetToSelect = activeNovel.assets.find(a => a.type === targetType);
+  }
+  
+  if (assetToSelect) {
+    switchEditorTarget('asset', assetToSelect.id);
+    
+    setTimeout(() => {
+      const sidebarItem = document.querySelector(`.asset-item[data-id="${assetToSelect.id}"]`);
+      if (sidebarItem) {
+        sidebarItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        sidebarItem.classList.add('pulse-highlight');
+        setTimeout(() => sidebarItem.classList.remove('pulse-highlight'), 1500);
+      }
+      
+      if (refType === 'thread' || refType === 'promise') {
+        setTimeout(() => {
+          elements.modePreview.click();
+          
+          setTimeout(() => {
+            const previewEl = elements.editorPreview;
+            const targets = Array.from(previewEl.querySelectorAll('h2, h3, li, p, strong'));
+            const targetEl = targets.find(el => {
+              const text = el.textContent;
+              return text.includes(refId) || 
+                     (refType === 'promise' && text.includes(`promise-${refNum}`)) || 
+                     text.includes(details.title);
+            });
+            if (targetEl) {
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              const parentLi = targetEl.closest('li') || targetEl;
+              parentLi.style.backgroundColor = 'rgba(59, 130, 246, 0.22)';
+              parentLi.style.borderRadius = '4px';
+              parentLi.style.transition = 'background-color 0.3s ease';
+              setTimeout(() => {
+                parentLi.style.backgroundColor = '';
+              }, 2000);
+            }
+          }, 150);
+        }, 150);
+      }
+    }, 100);
+  } else {
+    showToast(`未找到该参考项的详细设定。`, 'warning');
+  }
+}
+
+function showRefPopover(badge) {
+  closeActivePopover();
+  
+  const activeNovel = getActiveNovel();
+  if (!activeNovel) return;
+  
+  const refType = badge.dataset.refType;
+  const refId = badge.dataset.refId;
+  const refNum = badge.dataset.refNum;
+  
+  const details = getRefDetails(activeNovel, refType, refId, refNum);
+  if (!details) return;
+  
+  const popover = document.createElement('div');
+  popover.className = 'ref-popover';
+  
+  popover.innerHTML = `
+    <div class="popover-header">
+      <span class="popover-title" title="${escapeHtml(details.title)}">${escapeHtml(details.title)}</span>
+      <span class="popover-badge ${details.badgeClass}">${escapeHtml(details.badge)}</span>
+    </div>
+    <div class="popover-body">${marked.parse(details.body)}</div>
+    <div class="popover-footer">
+      <button class="popover-btn popover-btn-primary" id="popover-jump-btn">定位到此处</button>
+      <button class="popover-btn" id="popover-close-btn">关闭</button>
+    </div>
+  `;
+  
+  document.body.appendChild(popover);
+  activePopover = popover;
+  
+  const badgeRect = badge.getBoundingClientRect();
+  const popoverRect = popover.getBoundingClientRect();
+  
+  let left = badgeRect.left + window.scrollX + (badgeRect.width - popoverRect.width) / 2;
+  let top = badgeRect.top + window.scrollY - popoverRect.height - 10;
+  
+  if (left < 10) left = 10;
+  if (left + popoverRect.width > window.innerWidth - 10) {
+    left = window.innerWidth - popoverRect.width - 10;
+  }
+  
+  if (badgeRect.top - popoverRect.height - 10 < 10) {
+    top = badgeRect.bottom + window.scrollY + 10;
+  }
+  
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+  
+  popover.querySelector('#popover-close-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeActivePopover();
+  });
+  
+  popover.querySelector('#popover-jump-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    jumpToReference(activeNovel, refType, refId, refNum, details);
+    closeActivePopover();
+  });
+}
+
 function updatePreview() {
   const text = elements.editorTextarea.value;
-  elements.editorPreview.innerHTML = marked.parse(text);
+  elements.editorPreview.innerHTML = enrichReferenceLinks(marked.parse(text));
 }
 
 function insertTextAtCursor(textToInsert) {
@@ -1192,7 +2111,7 @@ function openAssetModal(group, asset = null) {
       { value: 'system', text: '力量体系/法则' }
     ],
     'character-growth': [
-      { value: 'main-character', text: '核心主角（视角锚点）' },
+      { value: 'main-character', text: '核心主角（视角中心）' },
       { value: 'major-character', text: '主要人物' },
       { value: 'family-character', text: '主角家族' },
       { value: 'former-sect-character', text: '旧宗门人物' },
@@ -1479,6 +2398,16 @@ const AGENT_SKILL_INDEX = [
     triggers: /(人物|角色|名册|关系|拓扑|弧光|高光|阵营|家族|反派)/
   },
   {
+    name: 'plot-compiler',
+    description: '基于总纲、人物和世界观编译卷纲与章节细纲，维护因果、伏笔、时空、多线群像和章节状态变化。',
+    triggers: /(章节细纲|章纲|设计剧情|剧情脉络|群像|多线叙事|三幕.*线|时间线|空间线|100章|一百章)/
+  },
+  {
+    name: 'novel-final-audit',
+    description: '在总纲、人物和章节完成后执行跨域终审、最小补丁修复与最终长篇大纲整合。',
+    triggers: /(全书终审|综合审核|最终审核|全面审核|最终整合|全书优化)/
+  },
+  {
     name: 'json-repair',
     description: '修复模型返回的损坏 JSON，保留语义并抢救完整对象。',
     triggers: /(JSON|解析|parse|逗号|括号|尾部|格式损坏)/
@@ -1500,6 +2429,11 @@ Steps: extract hard constraints; build beginning/development/climax/ending; enfo
   'character-system': `# character-system
 Use for large cast construction and repair.
 Steps: start from canonical facts; complete roster first; keep desire/goal/interest/agency/arc/highlight/fate distinct; protect protagonists from antagonist templates; audit duplicates, contradictions, missing factions, tool-like characters, and outline drift.`,
+  'plot-compiler': `# plot-compiler
+Use after the master outline and character system exist.
+Plan volumes first, then generate chapter cards in small batches. Every chapter must have causal prerequisites, participating existing characters, character-driven actions, conflict, turn, cost, state delta, time, space, planted/payoff clues, and an ending hook. Program logic rejects unknown characters, forward dependencies, duplicate chapters, missing fields, and orphan payoffs. LLM auditors judge pacing, plausibility, ensemble balance, suspense, reversals, and emotional curve.`,
+  'novel-final-audit': `# novel-final-audit
+Use after characters and chapter outlines are approved. Run deterministic cross-domain checks first, then audit character agency, arc realization, causal continuity, relationship progression, ensemble balance, pacing, suspense, time-space continuity, resource provenance, and clue payoff. Repair with minimal field patches instead of regenerating the full novel. Re-run hard checks and produce a final integrated outline plus a transparent review report.`,
   'json-repair': `# json-repair
 Use when AI JSON fails parsing.
 Repair syntax only: missing commas, quotes, braces, brackets, markdown fences, and truncated tails. Preserve semantics and do not invent story facts.`,
@@ -1606,7 +2540,85 @@ function selectAgentPattern(task) {
   }
   return {
     name: 'Orchestrator + Workers',
-    description: '协调者分发多个 worker 并合并结果，适合广泛探索和多维创作。'
+    description: '协调者分发多个 worker 并合并结果，适合广泛探索 and 多维创作。'
+  };
+}
+
+function extractChapterNumberFromTask(task) {
+  if (!task) return null;
+  const match = task.match(/(?:第\s*(\d+)\s*章|chapter-outline-(\d+)|chapter\s*(\d+))/i);
+  if (match) {
+    const num = match[1] || match[2] || match[3];
+    return Number(num);
+  }
+  return null;
+}
+
+function buildRollingWorldState(novel, currentChapterNumber, generatedChapters = []) {
+  const chapters = generatedChapters.length > 0 
+    ? generatedChapters 
+    : (novel?.plotBlueprint?.chapters || []);
+  
+  const previousChapters = chapters.filter(c => Number(c.chapterNumber) < currentChapterNumber);
+  
+  const plantedSet = new Map();
+  const paidSet = new Set();
+  
+  for (const c of previousChapters) {
+    const planted = Array.isArray(c.plantedClues) ? c.plantedClues : [];
+    const paid = Array.isArray(c.paidClues) ? c.paidClues : [];
+    for (const p of planted) {
+      if (typeof p === 'string' && p.trim()) {
+        plantedSet.set(p.trim(), c.chapterNumber);
+      }
+    }
+    for (const p of paid) {
+      if (typeof p === 'string' && p.trim()) {
+        paidSet.add(p.trim());
+      }
+    }
+  }
+  
+  const activeClues = [];
+  for (const [clue, chNum] of plantedSet.entries()) {
+    if (!paidSet.has(clue)) {
+      activeClues.push({ clue, plantedInChapter: chNum });
+    }
+  }
+  
+  const characterPositions = {};
+  for (const c of previousChapters) {
+    const location = c.location || '';
+    const participants = Array.isArray(c.participants) ? c.participants : [];
+    const viewpoint = c.viewpoint || '';
+    
+    const allParticipants = new Set(participants);
+    if (viewpoint) allParticipants.add(viewpoint);
+    
+    for (const p of allParticipants) {
+      if (typeof p === 'string' && p.trim()) {
+        const name = p.trim();
+        characterPositions[name] = {
+          lastSeenChapter: c.chapterNumber,
+          location: location
+        };
+      }
+    }
+  }
+  
+  const completedMilestones = Array.from(paidSet);
+  const recentDeltas = previousChapters.slice(-5).map(c => ({
+    chapterNumber: c.chapterNumber,
+    relationshipDelta: c.relationshipDelta || '无明显变化',
+    stateDelta: c.stateDelta || '无明显变化',
+    knowledgeDelta: c.knowledgeDelta || '无明显变化'
+  }));
+
+  return {
+    activeClues,
+    characterPositions,
+    completedMilestones,
+    recentDeltas
   };
 }
 
@@ -1615,6 +2627,14 @@ function buildRuntimeTaskContext({ novel, task, extra = '', graphLimit = 18 }) {
     ? retrieveGraphContext(novel, task, graphLimit)
     : { context: '暂无图谱数据', edges: [] };
   const assets = compactAssetsForContext(novel?.assets || [], task);
+  
+  let rollingWorldStateStr = '无';
+  if (novel?.plotBlueprint?.chapters && novel.plotBlueprint.chapters.length > 0) {
+    const currentChapterNumber = extractChapterNumberFromTask(task) || (novel.plotBlueprint.chapters.length + 1);
+    const rollingState = buildRollingWorldState(novel, currentChapterNumber);
+    rollingWorldStateStr = JSON.stringify(rollingState);
+  }
+
   const context = `任务：${task}
 小说名称：${novel?.name || '未命名小说'}
 背景设定：${compactString(novel?.background || '未提供', 1800)}
@@ -1631,9 +2651,24 @@ function buildRuntimeTaskContext({ novel, task, extra = '', graphLimit = 18 }) {
   delta: event.stateDelta
 }))), 4200)}
 伏笔台账：${compactString(JSON.stringify(novel?.promiseLedger || []), 2600)}
+章节剧情蓝图：${compactString(JSON.stringify((novel?.plotBlueprint?.chapters || []).map(chapter => ({
+  n: chapter.chapterNumber,
+  title: chapter.title,
+  viewpoint: chapter.viewpoint,
+  participants: chapter.participants,
+  action: chapter.characterAction,
+  conflict: chapter.conflict,
+  turn: chapter.turn,
+  delta: chapter.stateDelta,
+  seed: chapter.plantedClues,
+  payoff: chapter.paidClues,
+  hook: chapter.endingHook
+}))), 5200)}
+滚动世界状态（累积因果追踪）：${compactString(rollingWorldStateStr, 3200)}
 轻量设定索引：${JSON.stringify(assets)}
 GraphRAG 摘要：${compactString(graphContext.context, AGENT_CONTEXT_BUDGET.maxGraphChars)}
 相关链路：${compactString(graphContext.edges.map(edge => `${edge.source} --${edge.type}--> ${edge.target}`).join('\n'), 2600)}
+背景风格硬约束：${getNovelStyleConstraint(novel)}
 ${extra}
 ${getSkillIndexPrompt()}`;
   return compactString(context, AGENT_CONTEXT_BUDGET.maxPromptChars);
@@ -2261,21 +3296,9 @@ function blueprintToAssets(blueprint, novelId) {
 读者钩子：${event.readerHook}`
     });
   });
-  blueprint.promiseLedger.forEach((promise, index) => {
-    assets.push({
-      id: `promise-ledger-${novelId}-${index}-${now}`,
-      group: 'plot-framework',
-      type: promise.status === 'paid' ? 'payoff' : 'planting',
-      name: `伏笔台账：${promise.id}`,
-      desc: `类型：${promise.promiseType}
-种子事件：${promise.seedEventId}
-预计回收：${promise.expectedPayoffWindow}
-回收事件：${promise.payoffEventId || '待后续卷回收'}
-状态：${promise.status}
-风险：${promise.risk}
-读者问题：${promise.readerQuestion}`
-    });
-  });
+  if (blueprint.promiseLedger.length) {
+    assets.push(createPromiseLedgerAsset(blueprint.promiseLedger, novelId, now));
+  }
   assets.push({
     id: `state-ledger-${novelId}-${now}`,
     group: 'plot-framework',
@@ -2751,7 +3774,7 @@ async function executeAgentTask(task, onStatus = () => {}, stateManager = null) 
   const activeNovel = getActiveNovel();
   if (!activeNovel) throw new Error('当前没有可处理的小说。');
   const runtime = await new AgentRuntime(task, activeNovel, onStatus).prepare(['narrative-compiler', 'novel-outline']);
-  
+
   if (stateManager) stateManager.updateNodeState('analysis', 'active');
   onStatus('叙事编译器正在生成 Kernel、势力计划、事件卡、伏笔台账和状态台账...', '总控 Agent', 15);
   let result = await createNarrativeCompiledOutline(
@@ -2783,18 +3806,991 @@ async function executeAgentTask(task, onStatus = () => {}, stateManager = null) 
     activeNovel.id,
     onStatus
   );
-  
+
   if (stateManager) {
     stateManager.updateNodeState('audit', 'completed');
     stateManager.updateNodeState('review', 'active');
   }
   onStatus('总纲已通过 AI 审核，准备提交用户审核。', '系统', 100);
-  
+
   return result;
 }
 
 function isCharacterBuildingTask(task) {
   return /(构建|创建|生成|设计|完善).{0,6}(人物|角色)|(人物|角色).{0,6}(体系|关系网|拓扑|档案)/.test(task);
+}
+
+function isPlotDesignTask(task) {
+  const text = String(task || '').trim();
+  const explicitPlotTask = /(设计|构建|生成|规划|编排|细化).{0,8}(剧情|章纲|章节细纲|细纲)|(剧情|章纲|章节细纲|细纲).{0,8}(设计|构建|生成|规划|编排)|群像多线叙事|三幕.{0,4}线/.test(text);
+  const shortChapterTask = /(设计|构建|生成|规划|编排|细化)\s*\d{2,4}\s*(?:章|章节)(?:\s*(?:剧情|章纲|细纲|大纲))?$/.test(text);
+  const countFirstTask = /^\s*\d{2,4}\s*(?:章|章节)\s*(?:剧情|章纲|细纲|大纲)?\s*$/.test(text);
+  return explicitPlotTask || shortChapterTask || countFirstTask;
+}
+
+function isFinalNovelAuditTask(task) {
+  return /(全书终审|综合审核|最终审核|全面审核|最终整合|全书优化|综合修改)/.test(String(task || ''));
+}
+
+function resolveCharacterReference(value, characterNames) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (characterNames.has(raw)) return raw;
+  const withoutAnnotation = raw
+    .replace(/\s*[（(][^）)]*[）)]\s*$/u, '')
+    .replace(/\s*[-—:：]\s*(觉醒者|正式盟友|盟友|动摇者|斥候|状态|身份)\s*$/u, '')
+    .trim();
+  if (characterNames.has(withoutAnnotation)) return withoutAnnotation;
+  return [...characterNames].find(name =>
+    raw.startsWith(`${name}（`) ||
+    raw.startsWith(`${name}(`) ||
+    raw.startsWith(`${name}：`) ||
+    raw.startsWith(`${name}-`)
+  ) || '';
+}
+
+function normalizeChapterCharacterReferences(novel) {
+  const characterNames = new Set((novel.characterBible || []).map(character => character.name));
+  let normalizedCount = 0;
+  (novel.plotBlueprint?.chapters || []).forEach(chapter => {
+    const viewpoint = resolveCharacterReference(chapter.viewpoint, characterNames);
+    if (viewpoint && viewpoint !== chapter.viewpoint) {
+      chapter.viewpoint = viewpoint;
+      normalizedCount += 1;
+    }
+    chapter.participants = (chapter.participants || []).map(name => {
+      const resolved = resolveCharacterReference(name, characterNames);
+      if (resolved && resolved !== name) normalizedCount += 1;
+      return resolved || name;
+    });
+    chapter.newElements = (chapter.newElements || []).map(element => {
+      if (element.type !== '人物') return element;
+      const resolved = resolveCharacterReference(element.name, characterNames);
+      if (!resolved) return element;
+      normalizedCount += 1;
+      return {
+        ...element,
+        type: '人物状态',
+        name: resolved,
+        purpose: element.purpose || `记录${resolved}在本章发生的身份、立场或关系变化`
+      };
+    });
+  });
+  return normalizedCount;
+}
+
+const PREMODERN_STYLE_REPLACEMENTS = [
+  [/赛博朋克/gi, '机关与符阵'],
+  [/科幻/g, '奇术'],
+  [/星际/g, '诸域'],
+  [/\bAI\b/gi, '器灵'],
+  [/人工智能/g, '器灵'],
+  [/程序/g, '章法'],
+  [/物理宇宙/g, '天地'],
+  [/数据流/g, '灵息脉络'],
+  [/锚点/g, '落脚处'],
+  [/外星人/g, '天外异族'],
+  [/银河系/g, '天河诸界'],
+  [/宇宙/g, '天地'],
+  [/时间旅行/g, '逆转光阴'],
+  [/平行世界/g, '异世'],
+  [/维度/g, '层次'],
+  [/位面/g, '界域'],
+  [/量子/g, '微尘'],
+  [/直播/g, '当众传讯'],
+  [/奇点/g, '异变源头'],
+  [/元宇宙/g, '幻境'],
+  [/虚拟现实/g, '幻境映照'],
+  [/数字生命/g, '器灵生魂'],
+  [/作者维度/g, '世事全局'],
+  [/作者/g, '记述者'],
+  [/读者/g, '世人'],
+  [/写作/g, '记述'],
+  [/剧情安排/g, '事态演变']
+];
+
+function getNovelStylePolicy(novel) {
+  const background = String(novel.background || '');
+  const premodern = /(架空古代|古代言情|历史架空|仙侠|修仙|武侠|东方玄幻)/.test(background) &&
+    !/(现代|都市|末世|星际|科幻|赛博朋克)/.test(background);
+  return {
+    era: premodern ? '架空古代/前现代' : '按背景设定',
+    premodern,
+    forbiddenTerms: premodern
+      ? PREMODERN_STYLE_REPLACEMENTS.map(([pattern]) => pattern.source.replace(/\\b/g, ''))
+      : []
+  };
+}
+
+function getNovelStyleConstraint(novel) {
+  const policy = getNovelStylePolicy(novel || {});
+  if (!policy.premodern) {
+    return '严格继承背景设定中的时代、社会、技术和世界规则；不得混入其他题材体系，不得出现作者、读者、写作、剧情安排等故事外表达。';
+  }
+  return `本书属于${policy.era}。人物认知、称谓、制度、器物、交通、通讯、战争和力量体系必须符合该时代与既定世界观。严格禁止出现赛博朋克、科幻、星际、AI、人工智能、程序、物理宇宙、数据流、锚点、外星人、银河系、宇宙、时间旅行、平行世界、维度、位面、量子、直播、奇点、元宇宙、虚拟现实、数字生命，以及作者、读者、写作、剧情安排等故事外概念。`;
+}
+
+function replaceStoryStyleTerms(value, replacements, path = '', changes = []) {
+  if (typeof value === 'string') {
+    let next = value;
+    replacements.forEach(([pattern, replacement]) => {
+      const before = next;
+      next = next.replace(pattern, replacement);
+      if (next !== before) changes.push({ path, from: pattern.source, to: replacement });
+    });
+    return next;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item, index) => replaceStoryStyleTerms(item, replacements, `${path}[${index}]`, changes));
+  }
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach(key => {
+      value[key] = replaceStoryStyleTerms(value[key], replacements, path ? `${path}.${key}` : key, changes);
+    });
+  }
+  return value;
+}
+
+function enforceNovelStylePolicy(novel) {
+  const policy = getNovelStylePolicy(novel);
+  if (!policy.premodern) return { policy, changes: [] };
+  const changes = [];
+  [
+    'synopsis', 'masterOutline', 'analysisSummary', 'narrativeKernel',
+    'worldPressure', 'factionPlans', 'eventCards', 'promiseLedger',
+    'stateLedger', 'characterBible', 'characterRelations', 'plotBlueprint'
+  ].forEach(field => {
+    novel[field] = replaceStoryStyleTerms(
+      novel[field],
+      PREMODERN_STYLE_REPLACEMENTS,
+      field,
+      changes
+    );
+  });
+  return { policy, changes };
+}
+
+function autoRepairOrphanCluePayoffs(novel) {
+  const chapters = novel.plotBlueprint?.chapters || [];
+  const seedChapterByClue = new Map();
+  const repairs = [];
+  chapters.forEach(chapter => {
+    (chapter.plantedClues || []).forEach(clue => {
+      if (clue && !seedChapterByClue.has(clue)) seedChapterByClue.set(clue, chapter.chapterNumber);
+    });
+    (chapter.paidClues || []).forEach(clue => {
+      if (!clue) return;
+      const existingSeed = seedChapterByClue.get(clue);
+      if (existingSeed && existingSeed < chapter.chapterNumber) return;
+      const seedNumber = Math.max(1, chapter.chapterNumber - Math.min(8, Math.max(2, Math.floor(chapter.chapterNumber * 0.08))));
+      const seedChapter = chapters.find(item => item.chapterNumber === seedNumber);
+      if (!seedChapter) return;
+      seedChapter.plantedClues = [...new Set([...(seedChapter.plantedClues || []), clue])];
+      const clueText = `“${clue}”首次以不完整迹象出现，只建立疑问，不提前揭示答案`;
+      if (!String(seedChapter.knowledgeDelta || '').includes(clue)) {
+        seedChapter.knowledgeDelta = [seedChapter.knowledgeDelta, clueText].filter(Boolean).join('；');
+      }
+      if (!String(seedChapter.endingHook || '').includes(clue)) {
+        seedChapter.endingHook = [seedChapter.endingHook, `有关${clue}的细节尚未得到解释`].filter(Boolean).join('；');
+      }
+      seedChapterByClue.set(clue, seedNumber);
+      repairs.push({ clue, seedChapter: seedNumber, payoffChapter: chapter.chapterNumber });
+    });
+  });
+  return repairs;
+}
+
+function runStaticFinalNovelAudit(novel) {
+  const characters = novel.characterBible || [];
+  const relations = novel.characterRelations || [];
+  const chapters = novel.plotBlueprint?.chapters || [];
+  const characterNames = new Set(characters.map(character => character.name));
+  const blockingIssues = [];
+  const repairableIssues = [];
+  const warnings = [];
+  const unnamedPattern = /路人[甲乙丙丁]|某(?:人|弟子|长老|村民)|无名(?:氏|者)/;
+  const requiredCharacterFields = [
+    'name', 'identity', 'personality', 'lifeHistory', 'growthHistory', 'arc',
+    'highlight', 'fate', 'desire', 'goal', 'interests', 'agency'
+  ];
+  const appearances = new Map(characters.map(character => [character.name, 0]));
+  const clueSeeds = new Map();
+  const cluePayoffs = new Map();
+  const stylePolicy = getNovelStylePolicy(novel);
+
+  if (!novel.masterOutline) blockingIssues.push('缺少已审核全书总纲');
+  if (characters.length < 3) blockingIssues.push('人物体系不存在或数量不足');
+  if (!chapters.length) blockingIssues.push('章节细纲不存在');
+  characters.forEach(character => {
+    const missing = requiredCharacterFields.filter(field => !String(character[field] || '').trim());
+    if (missing.length) repairableIssues.push(`人物“${character.name || '未命名'}”缺少字段：${missing.join('、')}`);
+    if (!character.name || unnamedPattern.test(character.name)) blockingIssues.push(`存在非具名人物：${character.name || '空姓名'}`);
+  });
+  relations.forEach((relation, index) => {
+    if (!characterNames.has(relation.source) || !characterNames.has(relation.target)) {
+      blockingIssues.push(`关系${index + 1}引用未知人物：${relation.source} → ${relation.target}`);
+    }
+  });
+  chapters.forEach((chapter, index) => {
+    if (Number(chapter.chapterNumber) !== index + 1) {
+      blockingIssues.push(`章节序号不连续：期望${index + 1}，实际${chapter.chapterNumber}`);
+    }
+    if (!characterNames.has(chapter.viewpoint)) {
+      repairableIssues.push(`第${chapter.chapterNumber}章视角人物不存在：${chapter.viewpoint}`);
+    }
+    (chapter.participants || []).forEach(name => {
+      if (!characterNames.has(name)) repairableIssues.push(`第${chapter.chapterNumber}章出现未知人物：${name}`);
+      else appearances.set(name, (appearances.get(name) || 0) + 1);
+    });
+    (chapter.resourcesUsed || []).forEach(resource => {
+      if (!resource.origin || !resource.cost) {
+        repairableIssues.push(`第${chapter.chapterNumber}章道具/资源“${resource.name}”缺少来源或代价`);
+      }
+    });
+    (chapter.newElements || []).forEach(element => {
+      if (!element.origin || !element.purpose) {
+        repairableIssues.push(`第${chapter.chapterNumber}章新增元素“${element.name}”缺少来源或用途`);
+      }
+      if (element.type === '人物' && !characterNames.has(element.name)) {
+        repairableIssues.push(`第${chapter.chapterNumber}章疑似天降人物：${element.name}`);
+      }
+    });
+    (chapter.plantedClues || []).forEach(clue => {
+      if (!clueSeeds.has(clue)) clueSeeds.set(clue, chapter.chapterNumber);
+    });
+    (chapter.paidClues || []).forEach(clue => {
+      const seedChapter = clueSeeds.get(clue);
+      if (!seedChapter || seedChapter >= chapter.chapterNumber) {
+        repairableIssues.push(`第${chapter.chapterNumber}章回收未提前埋设的伏笔：${clue}`);
+      }
+      cluePayoffs.set(clue, chapter.chapterNumber);
+    });
+    if (!chapter.characterGoal || !chapter.characterAction || !chapter.cost || !chapter.stateDelta) {
+      repairableIssues.push(`第${chapter.chapterNumber}章缺少人物目标、主动行动、代价或状态变化`);
+    }
+  });
+  if (stylePolicy.premodern) {
+    const storyText = JSON.stringify({
+      synopsis: novel.synopsis,
+      masterOutline: novel.masterOutline,
+      characters,
+      relations,
+      chapters
+    });
+    PREMODERN_STYLE_REPLACEMENTS.forEach(([pattern]) => {
+      const scanner = new RegExp(pattern.source, pattern.flags.replace('g', ''));
+      if (scanner.test(storyText)) {
+        repairableIssues.push(`背景为${stylePolicy.era}，仍出现禁用概念：${pattern.source.replace(/\\b/g, '')}`);
+      }
+    });
+  }
+  appearances.forEach((count, name) => {
+    const character = characters.find(item => item.name === name);
+    if (count === 0 && ['核心主角', '主要人物'].includes(character?.roleTier)) {
+      warnings.push(`主要人物“${name}”未进入任何章节`);
+    }
+  });
+  clueSeeds.forEach((seedChapter, clue) => {
+    if (!cluePayoffs.has(clue)) warnings.push(`伏笔“${clue}”在第${seedChapter}章埋设但未回收`);
+  });
+  const viewpointCounts = chapters.reduce((map, chapter) => {
+    map[chapter.viewpoint] = (map[chapter.viewpoint] || 0) + 1;
+    return map;
+  }, {});
+  const dominantViewpoint = Object.entries(viewpointCounts).sort((a, b) => b[1] - a[1])[0];
+  if (dominantViewpoint && dominantViewpoint[1] / chapters.length > 0.82 && characters.length >= 20) {
+    warnings.push(`视角过度集中于“${dominantViewpoint[0]}”（${dominantViewpoint[1]}/${chapters.length}章），群像利用不足`);
+  }
+  return {
+    passed: blockingIssues.length === 0,
+    score: Math.max(0, 100 - blockingIssues.length * 10 - repairableIssues.length * 5 - warnings.length * 2),
+    hardIssues: [...new Set(blockingIssues)],
+    repairableIssues: [...new Set(repairableIssues)],
+    warnings: [...new Set(warnings)],
+    metrics: {
+      characterCount: characters.length,
+      relationCount: relations.length,
+      chapterCount: chapters.length,
+      seededClueCount: clueSeeds.size,
+      paidClueCount: cluePayoffs.size,
+      activeCharacterCount: [...appearances.values()].filter(Boolean).length
+    },
+    stylePolicy
+  };
+}
+
+function applyFinalNovelPatches(novel, repair) {
+  const characters = novel.characterBible || [];
+  const relations = novel.characterRelations || [];
+  const chapters = novel.plotBlueprint?.chapters || [];
+  (repair.characterPatches || []).forEach(patch => {
+    const character = characters.find(item => item.name === patch.name);
+    if (!character || !patch.fields || typeof patch.fields !== 'object') return;
+    Object.assign(character, patch.fields, { name: character.name });
+  });
+  (repair.relationPatches || []).forEach(patch => {
+    const relation = relations.find(item =>
+      item.source === patch.source && item.target === patch.target &&
+      (!patch.type || item.type === patch.type)
+    );
+    if (relation && patch.fields && typeof patch.fields === 'object') Object.assign(relation, patch.fields);
+  });
+  (repair.chapterPatches || []).forEach(patch => {
+    const chapter = chapters.find(item => Number(item.chapterNumber) === Number(patch.chapterNumber));
+    if (!chapter || !patch.fields || typeof patch.fields !== 'object') return;
+    Object.assign(chapter, normalizeChapterOutline({ ...chapter, ...patch.fields }, chapter.chapterNumber, chapter.volumeId));
+  });
+  (repair.volumePatches || []).forEach(patch => {
+    const volume = novel.plotBlueprint?.architecture?.volumes?.find(item => item.id === patch.id);
+    if (volume && patch.fields && typeof patch.fields === 'object') Object.assign(volume, patch.fields);
+  });
+  syncEmbeddedCharacterRelationships(novel);
+}
+
+function rebuildPromiseLedgerFromChapters(novel) {
+  const existingById = new Map((novel.promiseLedger || []).map(promise => [promise.id, promise]));
+  const ledgerById = new Map();
+  (novel.plotBlueprint?.chapters || []).forEach(chapter => {
+    (chapter.plantedClues || []).forEach(clue => {
+      if (!clue) return;
+      const existing = existingById.get(clue) || {};
+      if (!ledgerById.has(clue)) {
+        ledgerById.set(clue, {
+          id: clue,
+          promiseType: existing.promiseType || '章节伏笔',
+          seedEventId: `chapter-outline-${chapter.chapterNumber}`,
+          expectedPayoffWindow: existing.expectedPayoffWindow || '后续章节',
+          payoffEventId: '',
+          status: 'planted',
+          risk: existing.risk || '需确保回收时推动人物选择或揭示关键信息',
+          readerQuestion: existing.readerQuestion || `“${clue}”将如何影响人物与主线？`
+        });
+      }
+    });
+    (chapter.paidClues || []).forEach(clue => {
+      if (!clue) return;
+      const existing = ledgerById.get(clue) || existingById.get(clue) || {
+        id: clue,
+        promiseType: '章节伏笔',
+        seedEventId: '',
+        expectedPayoffWindow: `第${chapter.chapterNumber}章前`,
+        risk: '来源需人工复核',
+        readerQuestion: `“${clue}”如何完成回收？`
+      };
+      ledgerById.set(clue, {
+        ...existing,
+        payoffEventId: `chapter-outline-${chapter.chapterNumber}`,
+        status: 'paid'
+      });
+    });
+  });
+  novel.promiseLedger = [...ledgerById.values()];
+}
+
+async function buildFinalNovelAudit(task, onStatus = () => {}, stateManager = null) {
+  const activeNovel = getActiveNovel();
+  if (!activeNovel?.masterOutline || !activeNovel.characterBible?.length || !activeNovel.plotBlueprint?.chapters?.length) {
+    throw new Error('全书终审需要已审核总纲、人物体系和章节细纲。');
+  }
+  const novel = structuredClone(activeNovel);
+  const runtime = await new AgentRuntime(task, novel, onStatus).prepare([
+    'novel-final-audit', 'character-system', 'plot-compiler', 'narrative-compiler'
+  ]);
+  stateManager?.updateNodeState('hard-check', 'active');
+  const normalizedReferenceCount = normalizeChapterCharacterReferences(novel);
+  const initialAudit = runStaticFinalNovelAudit(novel);
+  const initialStaticScore = initialAudit.score;
+  if (!initialAudit.passed) {
+    throw new Error(`全书终审发现无法自动恢复的基础错误：${initialAudit.hardIssues.slice(0, 8).join('；')}`);
+  }
+  const styleEnforcement = enforceNovelStylePolicy(novel);
+  const clueRepairs = autoRepairOrphanCluePayoffs(novel);
+  let staticAudit = runStaticFinalNovelAudit(novel);
+  onStatus(
+    `程序初检 ${initialStaticScore} 分：归一化 ${normalizedReferenceCount} 处人物标注，自动补种 ${clueRepairs.length} 条伏笔，修正 ${styleEnforcement.changes.length} 处时代风格越界；剩余 ${staticAudit.repairableIssues.length} 个可修复问题。`,
+    '程序硬检',
+    18
+  );
+  const styleConstraint = getNovelStyleConstraint(novel);
+  stateManager?.updateNodeState('hard-check', 'completed');
+  stateManager?.updateNodeState('cross-audit', 'active');
+  onStatus('跨域审计 Agent 正在核对人物弧光、章节行动、关系变化、伏笔、时空与因果链...', '跨域审计 Agent', 28);
+  const characterDigest = novel.characterBible.map(character => ({
+    name: character.name,
+    identity: character.identity,
+    faction: character.faction,
+    personality: character.personality,
+    desire: character.desire,
+    goal: character.goal,
+    interests: character.interests,
+    agency: character.agency,
+    arc: character.arc,
+    highlight: character.highlight,
+    fate: character.fate
+  }));
+  const chapterDigest = novel.plotBlueprint.chapters.map(chapter => ({
+    n: chapter.chapterNumber,
+    volume: chapter.volumeId,
+    viewpoint: chapter.viewpoint,
+    participants: chapter.participants,
+    goal: chapter.characterGoal,
+    action: chapter.characterAction,
+    conflict: chapter.conflict,
+    cause: chapter.causalReason,
+    turn: chapter.turn,
+    cost: chapter.cost,
+    relationship: chapter.relationshipDelta,
+    state: chapter.stateDelta,
+    emotion: chapter.emotionalCurve,
+    seed: chapter.plantedClues,
+    payoff: chapter.paidClues,
+    hook: chapter.endingHook
+  }));
+  const volumeAuditMemos = [];
+  for (const [volumeIndex, volume] of novel.plotBlueprint.architecture.volumes.entries()) {
+    const volumeChapters = chapterDigest.filter(chapter =>
+      chapter.n >= volume.chapterStart && chapter.n <= volume.chapterEnd
+    );
+    const involvedNames = new Set(volumeChapters.flatMap(chapter => chapter.participants || []));
+    const involvedCharacters = characterDigest.filter(character => involvedNames.has(character.name));
+    onStatus(
+      `卷审计 Worker ${volumeIndex + 1}/${novel.plotBlueprint.architecture.volumes.length} 正在检查第 ${volume.chapterStart}-${volume.chapterEnd} 章...`,
+      `卷审计 Worker ${volumeIndex + 1}`,
+      28 + Math.round((volumeIndex / Math.max(1, novel.plotBlueprint.architecture.volumes.length)) * 18)
+    );
+    const volumeAudit = await callJsonAgentWithRepair(
+      `你是长篇网文分卷审计 Worker。只返回 JSON：
+{"volumeId":"卷ID","summary":"短结论","issues":[{"severity":"critical|high|medium|low","domain":"人物|关系|因果|剧情|伏笔|时间|空间|节奏|群像|悬疑|高潮|低谷|常识","target":"人物名/章节号","problem":"具体问题","repairInstruction":"最小修改方案"}],"strengths":["优势"]}
+
+只审查本卷：人物是否主动推动剧情，弧光是否有阶段变化，因果与时空是否连续，资源是否有来源，伏笔是否先埋后收，高潮低谷和章末钩子是否有效。
+${styleConstraint}`,
+      `${runtime.getWorkerContext(`卷审计 Worker ${volumeIndex + 1}`, `只审核 ${volume.id} 的章节`)}
+卷纲：${JSON.stringify(volume)}
+本卷人物：${JSON.stringify(involvedCharacters)}
+本卷章节：${JSON.stringify(volumeChapters)}`,
+      onStatus,
+      `卷审计 Worker ${volumeIndex + 1}`
+    );
+    volumeAuditMemos.push({
+      volumeId: volume.id,
+      summary: String(volumeAudit.summary || ''),
+      issues: Array.isArray(volumeAudit.issues) ? volumeAudit.issues : [],
+      strengths: Array.isArray(volumeAudit.strengths) ? volumeAudit.strengths : []
+    });
+  }
+  const audit = await callJsonAgentWithRepair(
+    `你是长篇网文全书终审 Agent。只返回 JSON：
+{"score":0,"summary":"总体结论","issues":[{"severity":"critical|high|medium|low","domain":"人物|关系|因果|剧情|伏笔|时间|空间|节奏|群像|悬疑|高潮|结局|常识","target":"人物名/章节号/卷ID","problem":"可验证问题","repairInstruction":"最小修改方案"}],"strengths":["优势"],"finalOutline":{"positioning":"作品定位","beginning":"最终开始","development":"最终发展","climax":"最终高潮","ending":"最终结局","coreCausalChain":"核心因果链","ensembleStructure":"三幕N线群像结构","suspenseAndPayoff":"悬疑、伏笔与回收","emotionalCurve":"全书情绪曲线"}}
+
+审核原则：
+1. 人物欲望、利益和主动选择必须真正推动章节，不能只在档案里存在。
+2. 人物生平、成长史、弧光、高光和命运必须在章节中有铺垫、转折与兑现。
+3. 检查关系变化连续性、势力行动合理性、因果闭环、时间空间连续和常识。
+4. 检查群像多线是否交汇，高潮是否由前序选择累积，结局是否回收核心承诺。
+5. 严禁天降人物、天降道具、机械巧合、为了剧情而剧情。
+6. 不得因为题材套路本身扣分，只处罚具体、可定位的问题。
+7. ${styleConstraint}`,
+    `${runtime.getWorkerContext('全书终审 Agent', '合并分卷审计结果，检查跨卷关系、弧光与终局')}
+程序指标：${JSON.stringify(staticAudit)}
+人物摘要：${JSON.stringify(characterDigest)}
+关系网：${JSON.stringify(novel.characterRelations)}
+卷级规划：${JSON.stringify(novel.plotBlueprint.architecture)}
+分卷审计备忘录：${JSON.stringify(volumeAuditMemos)}`,
+    onStatus,
+    '全书终审 Agent'
+  );
+  stateManager?.updateNodeState('cross-audit', 'completed');
+  stateManager?.updateNodeState('repair', 'active');
+  const staticRepairIssues = staticAudit.repairableIssues.map(problem => ({
+    severity: 'high',
+    domain: '程序约束',
+    target: problem.match(/第\d+章|人物“[^”]+”/)?.[0] || '全局',
+    problem,
+    repairInstruction: '补齐缺失字段、来源、代价或正确的伏笔前置，不改变既有核心剧情。'
+  }));
+  const actionableIssues = [...new Map([
+    ...staticRepairIssues,
+    ...volumeAuditMemos.flatMap(memo => memo.issues)
+      .filter(issue => ['critical', 'high', 'medium'].includes(issue.severity)),
+    ...(audit.issues || []).filter(issue => ['critical', 'high', 'medium'].includes(issue.severity))
+  ].map(issue => [`${issue.target || '全局'}|${issue.problem || ''}`, issue])).values()];
+  let repair = { characterPatches: [], relationPatches: [], chapterPatches: [], volumePatches: [] };
+  if (actionableIssues.length) {
+    const targetedChapterNumbers = new Set();
+    actionableIssues.forEach(issue => {
+      const text = `${issue.target || ''} ${issue.problem || ''}`;
+      for (const match of text.matchAll(/第?\s*(\d{1,3})\s*章/g)) {
+        targetedChapterNumbers.add(Number(match[1]));
+      }
+    });
+    const targetedChapterDigest = chapterDigest.filter(chapter => targetedChapterNumbers.has(chapter.n));
+    onStatus(`定向修复 Agent 正在处理 ${actionableIssues.length} 个跨域问题，只修改必要字段...`, '定向修复 Agent', 55);
+    repair = await callJsonAgentWithRepair(
+      `你是长篇网文定向修复 Agent。只返回最小补丁 JSON：
+{"characterPatches":[{"name":"现有人物姓名","fields":{"identity":"...","personality":"...","lifeHistory":"...","growthHistory":"...","desire":"...","goal":"...","interests":"...","agency":"...","arc":"...","highlight":"...","fate":"..."}}],
+"relationPatches":[{"source":"现有人物","target":"现有人物","type":"可选原关系类型","fields":{"description":"...","interestConflict":"..."}}],
+"chapterPatches":[{"chapterNumber":1,"fields":{"characterGoal":"...","characterAction":"...","conflict":"...","causalReason":"...","plotSummary":"...","turn":"...","cost":"...","resourcesUsed":[{"name":"...","origin":"此前来源","cost":"使用代价"}],"newElements":[{"type":"道具|地点|规则|信息","name":"...","origin":"前置来源","purpose":"用途"}],"knowledgeDelta":"...","relationshipDelta":"...","stateDelta":"...","emotionalCurve":"...","endingHook":"...","plantedClues":[],"paidClues":[]}}],
+"volumePatches":[{"id":"现有卷ID","fields":{"volumeGoal":"...","primaryConflict":"...","midpointTurn":"...","lowPoint":"...","climax":"...","endState":"...","nextHook":"..."}}]}
+
+规则：只修复审计明确指出的问题；不得改名、不得新增人物、不得新增无来源道具、不得重写全部人物或全部章节；补丁必须保持背景、简介和总纲核心承诺。
+${styleConstraint}
+伏笔修复规则：若某伏笔在第N章回收但此前未埋设，必须同时修改更早章节的 plantedClues、knowledgeDelta 或 endingHook 建立自然种子，禁止只删除回收项来逃避问题。`,
+      `${runtime.getWorkerContext('定向修复 Agent', '根据问题清单输出最小字段补丁')}
+问题：${JSON.stringify(actionableIssues)}
+人物摘要：${JSON.stringify(characterDigest)}
+命中章节：${JSON.stringify(targetedChapterDigest)}
+卷级规划：${JSON.stringify(novel.plotBlueprint.architecture)}`,
+      onStatus,
+      '定向修复 Agent'
+    );
+    applyFinalNovelPatches(novel, repair);
+  }
+  enforceNovelStylePolicy(novel);
+  autoRepairOrphanCluePayoffs(novel);
+  rebuildPromiseLedgerFromChapters(novel);
+  stateManager?.updateNodeState('repair', 'completed');
+  stateManager?.updateNodeState('final-review', 'active');
+  staticAudit = runStaticFinalNovelAudit(novel);
+  if (staticAudit.passed && staticAudit.repairableIssues.length) {
+    onStatus(
+      `首轮修复后仍有 ${staticAudit.repairableIssues.length} 个程序问题，补救 Agent 正在进行第二轮定点修复...`,
+      '补救 Agent',
+      72
+    );
+    const retryRepair = await callJsonAgentWithRepair(
+      `你是长篇大纲程序问题补救 Agent。只返回 JSON：
+{"characterPatches":[],"relationPatches":[],"chapterPatches":[{"chapterNumber":1,"fields":{"viewpoint":"现有人物姓名","participants":["现有人物姓名"],"resourcesUsed":[],"newElements":[],"plantedClues":[],"paidClues":[],"characterGoal":"...","characterAction":"...","cost":"...","stateDelta":"..."}}],"volumePatches":[]}
+
+只修复给出的问题。未知人物必须替换为人物库中的正确姓名；已有角色后面的括号身份或状态要去掉；无法证明的新人物从 newElements 中删除或改为“信息/人物状态”；补齐资源来源、代价和伏笔前置。不得新增人物。
+${styleConstraint}
+遇到“回收未提前埋设的伏笔”时，必须修改一个更早章节加入同名 plantedClues，并在 knowledgeDelta 或 endingHook 中写入不揭底的前兆；不得只修改回收章节。`,
+      `人物库：${JSON.stringify(novel.characterBible.map(character => character.name))}
+剩余问题：${JSON.stringify(staticAudit.repairableIssues)}
+相关章节：${JSON.stringify(novel.plotBlueprint.chapters.filter(chapter =>
+        staticAudit.repairableIssues.some(problem => problem.includes(`第${chapter.chapterNumber}章`))
+      ))}`,
+      onStatus,
+      '补救 Agent'
+    );
+    applyFinalNovelPatches(novel, retryRepair);
+    normalizeChapterCharacterReferences(novel);
+    enforceNovelStylePolicy(novel);
+    autoRepairOrphanCluePayoffs(novel);
+    staticAudit = runStaticFinalNovelAudit(novel);
+  }
+  if (!staticAudit.passed || staticAudit.repairableIssues.length) {
+    const remaining = [...staticAudit.hardIssues, ...staticAudit.repairableIssues];
+    throw new Error(`终审补丁后仍存在程序硬错误，已停止应用：${remaining.slice(0, 8).join('；')}`);
+  }
+  onStatus('全书复审 Agent 正在验证修复后的弧光兑现、因果闭环、群像交汇和最终回收...', '全书复审 Agent', 82);
+  const finalReview = await callJsonAgentWithRepair(
+    `你是长篇网文全书复审 Agent。只返回 JSON：
+{"score":0,"summary":"修复后结论","issues":[{"severity":"critical|high|medium|low","domain":"人物|关系|因果|剧情|伏笔|时间|空间|节奏|群像|悬疑|高潮|结局|常识","target":"具体目标","problem":"剩余问题","repairInstruction":"人工建议"}],"strengths":["修复后优势"],"finalOutline":{"positioning":"作品定位","beginning":"最终开始","development":"最终发展","climax":"最终高潮","ending":"最终结局","coreCausalChain":"核心因果链","ensembleStructure":"三幕N线群像结构","suspenseAndPayoff":"悬疑、伏笔与回收","emotionalCurve":"全书情绪曲线"}}
+
+要求：基于修复后的真实数据评分。程序硬校验已通过，不得重复报告不存在的引用或缺章；仍有质量建议可以保留并交给人工判断，不得为了高分掩盖问题。
+${styleConstraint}`,
+    `${runtime.getWorkerContext('全书复审 Agent', '复核修复结果并整合最终大纲')}
+原审计问题：${JSON.stringify(audit.issues || [])}
+已应用补丁：${JSON.stringify(repair)}
+修复后人物：${JSON.stringify(novel.characterBible.map(character => ({
+      name: character.name,
+      identity: character.identity,
+      desire: character.desire,
+      goal: character.goal,
+      interests: character.interests,
+      agency: character.agency,
+      arc: character.arc,
+      highlight: character.highlight,
+      fate: character.fate
+    })))}
+修复后卷纲：${JSON.stringify(novel.plotBlueprint.architecture)}
+分卷审计备忘录：${JSON.stringify(volumeAuditMemos)}
+程序复核指标：${JSON.stringify(staticAudit)}`,
+    onStatus,
+    '全书复审 Agent'
+  );
+  const normalizedAudit = {
+    score: Math.max(0, Math.min(100, Number(finalReview.score) || staticAudit.score)),
+    summary: String(finalReview.summary || audit.summary || '全书跨域审核完成。'),
+    issues: Array.isArray(finalReview.issues) ? finalReview.issues : [],
+    strengths: Array.isArray(finalReview.strengths) ? finalReview.strengths : [],
+    staticAudit,
+    repairedIssueCount: actionableIssues.length,
+    normalizedReferenceCount,
+    autoPlantedClueCount: clueRepairs.length,
+    styleRepairCount: styleEnforcement.changes.length,
+    initialStaticScore,
+    requiresHumanReview: true
+  };
+  stateManager?.updateNodeState('final-review', 'completed');
+  stateManager?.updateNodeState('review', 'active');
+  onStatus(
+    `全书终审完成：初检 ${initialStaticScore} 分，程序硬校验通过，已定向处理 ${actionableIssues.length} 个问题，复审 ${normalizedAudit.score} 分，提交人工审核。`,
+    '总控 Agent',
+    100
+  );
+  return {
+    chapterCount: novel.plotBlueprint.chapterCount,
+    architecture: novel.plotBlueprint.architecture,
+    chapters: novel.plotBlueprint.chapters,
+    characters: novel.characterBible,
+    relations: novel.characterRelations,
+    promiseLedger: novel.promiseLedger,
+    audit: normalizedAudit,
+    finalOutline: finalReview.finalOutline || audit.finalOutline || {
+      positioning: novel.analysisSummary || '',
+      ...novel.masterOutline
+    }
+  };
+}
+
+function getRequestedPlotChapterCount(task) {
+  const match = String(task || '').match(/(\d{2,4})\s*(?:章|章节)/);
+  return Math.min(300, Math.max(20, match ? Number(match[1]) : 100));
+}
+
+function normalizePlotArchitecture(raw, chapterCount) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const volumeCount = Math.max(1, Math.ceil(chapterCount / 20));
+  const volumes = Array.isArray(source.volumes) ? source.volumes : [];
+  return {
+    premise: String(source.premise || '').trim(),
+    firstPrinciples: (Array.isArray(source.firstPrinciples) ? source.firstPrinciples : []).map(String).filter(Boolean),
+    narrativeThreads: (Array.isArray(source.narrativeThreads) ? source.narrativeThreads : []).map((thread, index) => ({
+      id: String(thread.id || `thread-${index + 1}`),
+      name: String(thread.name || `叙事线 ${index + 1}`),
+      driverCharacters: (Array.isArray(thread.driverCharacters) ? thread.driverCharacters : []).map(String).filter(Boolean),
+      startState: String(thread.startState || ''),
+      endState: String(thread.endState || ''),
+      intersections: (Array.isArray(thread.intersections) ? thread.intersections : []).map(String).filter(Boolean)
+    })),
+    volumes: Array.from({ length: volumeCount }, (_, index) => {
+      const volume = volumes[index] || {};
+      const chapterStart = index * 20 + 1;
+      const chapterEnd = Math.min(chapterCount, (index + 1) * 20);
+      return {
+        id: String(volume.id || `volume-${index + 1}`),
+        title: String(volume.title || `第${index + 1}卷`).trim(),
+        chapterStart,
+        chapterEnd,
+        startState: String(volume.startState || '').trim(),
+        volumeGoal: String(volume.volumeGoal || '').trim(),
+        primaryConflict: String(volume.primaryConflict || '').trim(),
+        ensembleThreads: (Array.isArray(volume.ensembleThreads) ? volume.ensembleThreads : []).map(String).filter(Boolean),
+        midpointTurn: String(volume.midpointTurn || '').trim(),
+        climax: String(volume.climax || '').trim(),
+        lowPoint: String(volume.lowPoint || '').trim(),
+        endState: String(volume.endState || '').trim(),
+        nextHook: String(volume.nextHook || '').trim()
+      };
+    })
+  };
+}
+
+function normalizeChapterOutline(item, fallbackNumber, volumeId) {
+  const chapterNumber = Number(item?.chapterNumber) || fallbackNumber;
+  return {
+    id: String(item?.id || `chapter-outline-${chapterNumber}`),
+    chapterNumber,
+    volumeId: String(item?.volumeId || volumeId),
+    title: String(item?.title || `第${chapterNumber}章`).trim(),
+    time: String(item?.time || '').trim(),
+    location: String(item?.location || '').trim(),
+    viewpoint: String(item?.viewpoint || '').trim(),
+    participants: (Array.isArray(item?.participants) ? item.participants : []).map(String).filter(Boolean),
+    threadIds: (Array.isArray(item?.threadIds) ? item.threadIds : []).map(String).filter(Boolean),
+    prerequisiteChapterIds: (Array.isArray(item?.prerequisiteChapterIds) ? item.prerequisiteChapterIds : []).map(String).filter(Boolean),
+    openingState: String(item?.openingState || '').trim(),
+    characterGoal: String(item?.characterGoal || '').trim(),
+    characterAction: String(item?.characterAction || '').trim(),
+    opposition: String(item?.opposition || '').trim(),
+    conflict: String(item?.conflict || '').trim(),
+    causalReason: String(item?.causalReason || '').trim(),
+    plotSummary: String(item?.plotSummary || '').trim(),
+    turn: String(item?.turn || '').trim(),
+    cost: String(item?.cost || '').trim(),
+    resourcesUsed: (Array.isArray(item?.resourcesUsed) ? item.resourcesUsed : []).map(resource => ({
+      name: String(resource?.name || '').trim(),
+      origin: String(resource?.origin || '').trim(),
+      cost: String(resource?.cost || '').trim()
+    })).filter(resource => resource.name),
+    newElements: (Array.isArray(item?.newElements) ? item.newElements : []).map(element => ({
+      type: String(element?.type || '').trim(),
+      name: String(element?.name || '').trim(),
+      origin: String(element?.origin || '').trim(),
+      purpose: String(element?.purpose || '').trim()
+    })).filter(element => element.name),
+    knowledgeDelta: String(item?.knowledgeDelta || '').trim(),
+    relationshipDelta: String(item?.relationshipDelta || '').trim(),
+    stateDelta: String(item?.stateDelta || '').trim(),
+    emotionalCurve: String(item?.emotionalCurve || '').trim(),
+    plantedClues: (Array.isArray(item?.plantedClues) ? item.plantedClues : []).map(String).filter(Boolean),
+    paidClues: (Array.isArray(item?.paidClues) ? item.paidClues : []).map(String).filter(Boolean),
+    endingHook: String(item?.endingHook || '').trim()
+  };
+}
+
+function createFallbackChapterOutline(chapterNumber, volume, characters, previousChapter = null) {
+  const driver = characters[(chapterNumber - 1) % Math.max(1, characters.length)] || {};
+  const opponent = characters[chapterNumber % Math.max(1, characters.length)] || {};
+  return normalizeChapterOutline({
+    chapterNumber,
+    volumeId: volume.id,
+    title: `${volume.title}·推进节点${chapterNumber - volume.chapterStart + 1}`,
+    time: `承接第${chapterNumber - 1}章之后`,
+    location: '沿用卷级规划中的当前主要场景',
+    viewpoint: driver.name || '主角',
+    participants: [driver.name, opponent.name].filter(Boolean),
+    threadIds: [],
+    prerequisiteChapterIds: previousChapter ? [previousChapter.id] : [],
+    openingState: previousChapter?.stateDelta || volume.startState || '承接总纲与卷首状态',
+    characterGoal: driver.goal || volume.volumeGoal || '推动当前阶段目标',
+    characterAction: `${driver.name || '视角人物'}依据自身目标主动调查、谈判或采取行动`,
+    opposition: opponent.name || volume.primaryConflict || '当前阶段阻力',
+    conflict: volume.primaryConflict || '人物目标与现有秩序产生正面冲突',
+    causalReason: previousChapter
+      ? `由上一章“${previousChapter.stateDelta}”直接引发`
+      : `由卷首状态“${volume.startState || volume.volumeGoal}”引发`,
+    plotSummary: `围绕“${volume.volumeGoal || volume.primaryConflict}”推进一项可验证的行动，并产生后续代价。`,
+    turn: '行动获得部分结果，但暴露新的限制或利益冲突',
+    cost: '消耗资源、关系信用或安全空间',
+    resourcesUsed: [],
+    newElements: [],
+    knowledgeDelta: '获得或失去一项会影响后续选择的信息',
+    relationshipDelta: '至少一组人物关系因选择或代价发生变化',
+    stateDelta: '主线信息、人物关系或势力状态至少一项发生变化',
+    emotionalCurve: '期待上升—受阻—局部兑现—新悬念',
+    plantedClues: [],
+    paidClues: [],
+    endingHook: volume.nextHook || '新的选择迫使人物进入下一章'
+  }, chapterNumber, volume.id);
+}
+
+function validateAndHealPlotBlueprint(chapters, architecture, characters, chapterCount) {
+  const characterNames = new Set(characters.map(character => character.name));
+  const validChapters = [];
+  const issues = [];
+  const seenIds = new Set();
+  const clueSeeds = new Map();
+  for (let number = 1; number <= chapterCount; number += 1) {
+    const volume = architecture.volumes.find(item => number >= item.chapterStart && number <= item.chapterEnd) || architecture.volumes[0];
+    const source = chapters.find(item => Number(item.chapterNumber) === number);
+    const chapter = source
+      ? normalizeChapterOutline(source, number, volume.id)
+      : createFallbackChapterOutline(number, volume, characters, validChapters.at(-1));
+    chapter.chapterNumber = number;
+    chapter.id = `chapter-outline-${number}`;
+    chapter.volumeId = volume.id;
+    chapter.participants = chapter.participants.filter(name => characterNames.has(name));
+    if (chapter.viewpoint && !characterNames.has(chapter.viewpoint)) {
+      issues.push(`第${number}章视角人物不存在：${chapter.viewpoint}`);
+      chapter.viewpoint = chapter.participants[0] || characters[0]?.name || '';
+    }
+    if (!chapter.participants.length && chapter.viewpoint) chapter.participants = [chapter.viewpoint];
+    chapter.prerequisiteChapterIds = chapter.prerequisiteChapterIds.filter(id => {
+      const dep = Number(String(id).match(/\d+/)?.[0]);
+      return dep && dep < number;
+    });
+    if (number > 1 && !chapter.prerequisiteChapterIds.length) {
+      chapter.prerequisiteChapterIds = [`chapter-outline-${number - 1}`];
+    }
+    chapter.plantedClues.forEach(clue => clueSeeds.set(clue, number));
+    chapter.paidClues = chapter.paidClues.filter(clue => {
+      const seed = clueSeeds.get(clue);
+      if (!seed || seed >= number) {
+        issues.push(`第${number}章回收了未提前埋设的伏笔：${clue}`);
+        return false;
+      }
+      return true;
+    });
+    chapter.resourcesUsed = chapter.resourcesUsed.filter(resource => {
+      if (!resource.origin) {
+        issues.push(`第${number}章资源“${resource.name}”缺少来源`);
+        return false;
+      }
+      return true;
+    });
+    chapter.newElements = chapter.newElements.filter(element => {
+      if (!element.origin || !element.purpose) {
+        issues.push(`第${number}章新增元素“${element.name}”缺少来源或用途`);
+        return false;
+      }
+      return true;
+    });
+    const requiredFields = ['title', 'time', 'location', 'viewpoint', 'openingState', 'characterGoal', 'characterAction', 'opposition', 'conflict', 'causalReason', 'plotSummary', 'turn', 'cost', 'knowledgeDelta', 'relationshipDelta', 'stateDelta', 'emotionalCurve', 'endingHook'];
+    requiredFields.forEach(field => {
+      if (!chapter[field]) issues.push(`第${number}章缺少 ${field}`);
+    });
+    if (seenIds.has(chapter.id)) issues.push(`章节 ID 重复：${chapter.id}`);
+    seenIds.add(chapter.id);
+    validChapters.push(chapter);
+  }
+  const hardIssues = [];
+  if (validChapters.length !== chapterCount) {
+    hardIssues.push(`章节数量不一致：${validChapters.length}/${chapterCount}`);
+  }
+  validChapters.forEach(chapter => {
+    const requiredFields = ['title', 'time', 'location', 'viewpoint', 'openingState', 'characterGoal', 'characterAction', 'opposition', 'conflict', 'causalReason', 'plotSummary', 'turn', 'cost', 'knowledgeDelta', 'relationshipDelta', 'stateDelta', 'emotionalCurve', 'endingHook'];
+    const missing = requiredFields.filter(field => !chapter[field]);
+    if (missing.length) hardIssues.push(`第${chapter.chapterNumber}章修复后仍缺少：${missing.join('、')}`);
+    if (!characterNames.has(chapter.viewpoint)) hardIssues.push(`第${chapter.chapterNumber}章修复后视角人物仍不存在：${chapter.viewpoint}`);
+  });
+  return { chapters: validChapters, issues, hardIssues };
+}
+
+async function buildPlotSystem(task, onStatus = () => {}, stateManager = null) {
+  const novel = getActiveNovel();
+  if (!novel?.masterOutline) throw new Error('请先生成并审核全书总纲。');
+  if (!Array.isArray(novel.characterBible) || novel.characterBible.length < 3) {
+    throw new Error('请先完成人物体系构建并审核通过，再设计章节剧情。');
+  }
+  const chapterCount = getRequestedPlotChapterCount(task);
+  const runtime = await new AgentRuntime(task, novel, onStatus).prepare(['plot-compiler', 'narrative-compiler']);
+  const compactCharacters = novel.characterBible.map(character => ({
+    name: character.name,
+    identity: character.identity,
+    faction: character.faction,
+    desire: character.desire,
+    goal: character.goal,
+    interests: character.interests,
+    agency: character.agency,
+    arc: character.arc,
+    fate: character.fate
+  }));
+  if (stateManager) stateManager.updateNodeState('architecture', 'active');
+  onStatus(`剧情总控 Agent 正在按第一性原理规划 ${chapterCount} 章的卷级状态变化...`, '剧情总控 Agent', 8);
+  const architectureRaw = await callJsonAgentWithRepair(
+    `你是长篇网文剧情总控 Agent。只返回 JSON：
+{"premise":"故事最小不可约核心","firstPrinciples":["若移除就不成立的基本事实"],"narrativeThreads":[{"id":"thread-1","name":"叙事线","driverCharacters":["已有姓名"],"startState":"起点","endState":"终点","intersections":["与其他线交汇点"]}],"volumes":[{"id":"volume-1","title":"卷名","startState":"卷首状态","volumeGoal":"可验证目标","primaryConflict":"核心冲突","ensembleThreads":["群像线"],"midpointTurn":"中点转折","climax":"卷高潮","lowPoint":"低谷","endState":"卷末状态变化","nextHook":"下一卷钩子"}]}
+
+规则：
+1. 严格基于总纲、背景、人物库，不新增未登记人物。
+2. 默认每卷约 20 章，覆盖全部 ${chapterCount} 章。
+3. 人物欲望和利益推动事件；不能为了剧情而剧情。
+4. 冲突来自人物选择、势力计划、资源限制或前序后果。
+5. 三幕多线必须在卷级交汇，高潮必须由前置因果赚取。
+6. 时间、空间、信息、资源和关系状态必须可连续追踪。`,
+    `${runtime.baseContext}
+人物库：${JSON.stringify(compactCharacters)}
+目标章节数：${chapterCount}
+用户要求：${task}`,
+    onStatus,
+    '剧情总控 Agent'
+  );
+  const architecture = normalizePlotArchitecture(architectureRaw, chapterCount);
+  if (stateManager) {
+    stateManager.updateNodeState('architecture', 'completed');
+    stateManager.updateNodeState('chapters', 'active');
+  }
+
+  const chapters = [];
+  for (let start = 1; start <= chapterCount; start += 5) {
+    const end = Math.min(chapterCount, start + 4);
+    const volume = architecture.volumes.find(item => start >= item.chapterStart && start <= item.chapterEnd) || architecture.volumes[0];
+    onStatus(`章节编排 Agent 正在设计第 ${start}-${end} 章...`, '章节编排 Agent', 15 + Math.round((start / chapterCount) * 55));
+    let batchResult;
+    try {
+      batchResult = await callNamedArrayAgentWithRepair(
+        `你是长篇网文章节编排 Agent。只返回 JSON：
+{"chapters":[{"chapterNumber":1,"volumeId":"volume-1","title":"章名","time":"具体相对时间","location":"具体地点","viewpoint":"已有视角人物","participants":["已有姓名"],"threadIds":["thread-1"],"prerequisiteChapterIds":["chapter-outline-前章号"],"openingState":"章首状态","characterGoal":"人物本章目标","characterAction":"人物主动行动","opposition":"阻力及其动机","conflict":"冲突","causalReason":"为什么此事此刻必然发生","plotSummary":"剧情梗概","turn":"转折","cost":"代价","resourcesUsed":[{"name":"资源/道具","origin":"此前来源","cost":"使用代价"}],"newElements":[{"type":"人物|道具|地点|规则|信息","name":"新增元素","origin":"合理来源与前置铺垫","purpose":"后续用途"}],"knowledgeDelta":"谁知道了什么、谁仍不知道","relationshipDelta":"人物关系发生什么变化","stateDelta":"章末状态变化","emotionalCurve":"情绪曲线","plantedClues":["伏笔唯一名称"],"paidClues":["之前已埋伏笔名称"],"endingHook":"章末钩子"}]}
+
+规则：
+1. 只设计第 ${start}-${end} 章，必须完整返回每一章。
+2. participants/viewpoint 只能使用给定人物库姓名，严禁天降人物。
+3. 严禁天降道具；新道具必须来自既有资源、人物制作、交易或前章发现。
+4. 每章必须由人物目标和主动行动推动，并包含阻力、转折、代价、状态变化。
+5. prerequisiteChapterIds 只能引用更早章节。
+6. 伏笔先埋后收；不能同章无铺垫回收。
+7. 符合常识与时空连续性，禁止突兀转场和机械巧合。
+8. 所有资源和道具必须填写来源与使用代价；新增元素必须填写来源和后续用途。
+9. 每章必须明确知识差和关系变化，避免人物突然知道不该知道的信息或关系无过程跳变。
+10. ${getNovelStyleConstraint(novel)}`,
+        `总纲：${JSON.stringify(novel.masterOutline)}
+卷级规划：${JSON.stringify(volume)}
+全局叙事线：${JSON.stringify(architecture.narrativeThreads)}
+人物库：${JSON.stringify(compactCharacters)}
+已有章节尾部：${JSON.stringify(chapters.slice(-5))}
+本批范围：${start}-${end}`,
+        'chapters',
+        status => onStatus(status, '章节编排 Agent', 15 + Math.round((start / chapterCount) * 55)),
+        '章节编排 Agent'
+      );
+    } catch (error) {
+      onStatus(`第 ${start}-${end} 章 JSON 无法修复，启用结构化兜底并交给审计：${error.message}`, '章节编排 Agent', 15 + Math.round((start / chapterCount) * 55));
+      batchResult = { chapters: [], recovered: true };
+    }
+    const returned = Array.isArray(batchResult.chapters) ? batchResult.chapters : [];
+    for (let number = start; number <= end; number += 1) {
+      const source = returned.find(item => Number(item.chapterNumber) === number);
+      chapters.push(source
+        ? normalizeChapterOutline(source, number, volume.id)
+        : createFallbackChapterOutline(number, volume, novel.characterBible, chapters.at(-1)));
+    }
+  }
+
+  if (stateManager) {
+    stateManager.updateNodeState('chapters', 'completed');
+    stateManager.updateNodeState('validation', 'active');
+  }
+  const validation = validateAndHealPlotBlueprint(chapters, architecture, novel.characterBible, chapterCount);
+  if (validation.hardIssues.length) {
+    throw new Error(`章节细纲存在程序硬错误：${validation.hardIssues.slice(0, 8).join('；')}`);
+  }
+  const stylePolicy = getNovelStylePolicy(novel);
+  if (stylePolicy.premodern) {
+    const styleChanges = [];
+    replaceStoryStyleTerms(architecture, PREMODERN_STYLE_REPLACEMENTS, 'architecture', styleChanges);
+    replaceStoryStyleTerms(validation.chapters, PREMODERN_STYLE_REPLACEMENTS, 'chapters', styleChanges);
+    if (styleChanges.length) {
+      onStatus(`时代风格校验已修正 ${styleChanges.length} 处越界概念。`, '世界观校验', 76);
+    }
+  }
+  onStatus(`因果校验完成：${validation.chapters.length} 章连续，正在进行全局剧情审计...`, '因果校验 Agent', 78);
+  const audit = await callJsonAgentWithRepair(
+    `你是长篇网文剧情审计 Agent。只返回 JSON：
+{"passed":true,"score":0,"summary":"结论","issues":[{"severity":"critical|high|medium|low","category":"因果|人物驱动|伏笔|群像|时间|空间|节奏|高潮|低谷|悬念|常识|突兀发展","problem":"问题","repair":"方案"}],"strengths":["优势"]}
+
+审核重点：人物推动剧情、因果闭环、三幕多线交汇、时空连续、伏笔先埋后收、高潮有铺垫、低谷有代价、严禁天降人物/道具和机械巧合。
+${getNovelStyleConstraint(novel)}`,
+    `总纲：${JSON.stringify(novel.masterOutline)}
+卷级规划：${JSON.stringify(architecture)}
+章节细纲摘要：${JSON.stringify(validation.chapters.map(chapter => ({
+      n: chapter.chapterNumber,
+      title: chapter.title,
+      viewpoint: chapter.viewpoint,
+      action: chapter.characterAction,
+      conflict: chapter.conflict,
+      cause: chapter.causalReason,
+      turn: chapter.turn,
+      resources: chapter.resourcesUsed,
+      newElements: chapter.newElements,
+      knowledge: chapter.knowledgeDelta,
+      relationship: chapter.relationshipDelta,
+      delta: chapter.stateDelta,
+      seed: chapter.plantedClues,
+      payoff: chapter.paidClues,
+      hook: chapter.endingHook
+    })))}`,
+    onStatus,
+    '剧情审计 Agent'
+  );
+  const normalizedAudit = {
+    passed: Boolean(audit.passed) && Number(audit.score) >= 85,
+    score: Math.max(0, Math.min(100, Number(audit.score) || 0)),
+    summary: String(audit.summary || ''),
+    issues: Array.isArray(audit.issues) ? audit.issues : [],
+    strengths: Array.isArray(audit.strengths) ? audit.strengths : [],
+    requiresHumanReview: !audit.passed || Number(audit.score) < 85,
+    validationIssues: validation.issues
+  };
+  if (stateManager) {
+    stateManager.updateNodeState('validation', 'completed');
+    stateManager.updateNodeState('review', 'active');
+  }
+  onStatus(normalizedAudit.requiresHumanReview
+    ? `剧情细纲已通过程序硬校验，AI 审计 ${normalizedAudit.score} 分，提交人工复核。`
+    : `剧情审计通过：${normalizedAudit.score} 分。`, '系统', 100);
+  return { chapterCount, architecture, chapters: validation.chapters, audit: normalizedAudit };
 }
 
 function getRequestedCharacterCount(task) {
@@ -2946,6 +4942,57 @@ ${asset.desc}`,
     edges.push({ source: `event:${stateItem.eventId}`, target: `state:${stateItem.eventId}`, type: 'writes-state' });
   });
 
+  (novel.plotBlueprint?.architecture?.volumes || []).forEach(volume => {
+    addNode({
+      id: `volume:${volume.id}`,
+      kind: 'volume-outline',
+      label: volume.title,
+      text: [volume.startState, volume.volumeGoal, volume.primaryConflict, volume.midpointTurn, volume.lowPoint, volume.climax, volume.endState].join('\n'),
+      volume
+    });
+    edges.push({ source: 'novel-root', target: `volume:${volume.id}`, type: 'contains-volume' });
+  });
+  const plotClueNodes = new Set();
+  (novel.plotBlueprint?.chapters || []).forEach(chapter => {
+    addNode({
+      id: `plot-chapter:${chapter.chapterNumber}`,
+      kind: 'chapter-outline',
+      label: `${chapter.chapterNumber} ${chapter.title}`,
+      text: [
+        chapter.time, chapter.location, chapter.viewpoint, chapter.characterGoal,
+        chapter.characterAction, chapter.opposition, chapter.conflict, chapter.plotSummary,
+        chapter.turn, chapter.cost, chapter.stateDelta, chapter.emotionalCurve, chapter.endingHook
+      ].join('\n'),
+      chapter
+    });
+    edges.push({ source: `volume:${chapter.volumeId}`, target: `plot-chapter:${chapter.chapterNumber}`, type: 'contains-chapter' });
+    (chapter.prerequisiteChapterIds || []).forEach(dependencyId => {
+      const dependencyNumber = Number(String(dependencyId).match(/\d+/)?.[0]);
+      if (dependencyNumber) {
+        edges.push({ source: `plot-chapter:${dependencyNumber}`, target: `plot-chapter:${chapter.chapterNumber}`, type: 'causes' });
+      }
+    });
+    (chapter.participants || []).forEach(name => {
+      edges.push({ source: `character:${name}`, target: `plot-chapter:${chapter.chapterNumber}`, type: name === chapter.viewpoint ? 'viewpoint-of' : 'participates-in' });
+    });
+    (chapter.plantedClues || []).forEach(clue => {
+      const clueId = `plot-clue:${clue}`;
+      if (!plotClueNodes.has(clueId)) {
+        addNode({ id: clueId, kind: 'plot-clue', label: clue, text: clue });
+        plotClueNodes.add(clueId);
+      }
+      edges.push({ source: `plot-chapter:${chapter.chapterNumber}`, target: clueId, type: 'plants' });
+    });
+    (chapter.paidClues || []).forEach(clue => {
+      const clueId = `plot-clue:${clue}`;
+      if (!plotClueNodes.has(clueId)) {
+        addNode({ id: clueId, kind: 'plot-clue', label: clue, text: clue });
+        plotClueNodes.add(clueId);
+      }
+      edges.push({ source: clueId, target: `plot-chapter:${chapter.chapterNumber}`, type: 'pays-off' });
+    });
+  });
+
   const characters = novel.characterBible || [];
   characters.forEach(character => {
     addNode({
@@ -3035,9 +5082,47 @@ ${node.text || ''}`.toLowerCase();
   const relatedNodes = graph.nodes.filter(node => relatedIds.has(node.id));
   const contextNodes = [...new Map([...scored.map(item => item.node), ...relatedNodes].map(node => [node.id, node])).values()]
     .slice(0, limit + 12);
+  const KIND_TRANSLATIONS = {
+    'faction': '势力组织',
+    'location': '地理位置',
+    'system': '力量体系/法则',
+    'secret-clue': '隐秘线索',
+    'core-power': '核心力量/机制',
+    'main-outline': '主线大纲',
+    'pace-hooks': '节奏与钩子',
+    'planting': '伏笔设置',
+    'payoff': '回收机制',
+    'character': '人物',
+    'main-character': '核心主角',
+    'major-character': '主要人物',
+    'family-character': '主角家族',
+    'former-sect-character': '旧宗门人物',
+    'antagonist-character': '反派阵营',
+    'neutral-character': '中立势力',
+    'hidden-character': '隐藏势力',
+    'civilian-character': '凡人社会',
+    'supporting-character': '核心配角',
+    'character-network': '人物关系拓扑',
+    'promise-ledger': '伏笔台账',
+    'state-ledger': '状态台账',
+    'faction-plan': '势力计划',
+    'volume-outline': '卷级规划',
+    'chapter-outline': '章节细纲',
+    'plot-causal-chain': '剧情因果链',
+    'plot-timeline': '时空与多线叙事',
+    'plot-audit': '剧情审计报告',
+    'final-outline': '最终综合大纲',
+    'final-audit': '全书终审报告',
+    'group': '分类组',
+    'novel': '作品基础信息'
+  };
+
   return {
     graph,
-    context: contextNodes.map(node => `【${node.kind}｜${node.label}】${String(node.text || '').slice(0, 900)}`).join('\n'),
+    context: contextNodes.map(node => {
+      const translatedKind = KIND_TRANSLATIONS[node.kind] || node.kind;
+      return `【${translatedKind}｜${node.label}】${String(node.text || '').slice(0, 900)}`;
+    }).join('\n'),
     edges: relatedEdges.slice(0, 60)
   };
 }
@@ -3114,12 +5199,13 @@ ${graphContext.edges.map(edge => `${edge.source} --${edge.type}--> ${edge.target
 
 硬性约束：
 1. 人物身份、能力、势力、经历和命运不得违反背景设定、简介、总纲或左侧任何已审核设定。
-2. 新人物必须能明确挂接到至少一个既有势力、地点、规则、剧情阶段或伏笔链。
+2. 新人物必须能明确对应至少一个既有势力、地点、规则、剧情阶段或伏笔链。
 3. 若信息冲突，优先级依次为：角色事实裁决 > 用户最新明确指令 > 背景设定与简介 > 已修正总纲 > 左侧设定库 > 模型推断。
 4. 工作区名称不得被推断为小说正式书名，也不得用于否定简介中的主角、势力和情节。
 5. 不得擅自改变无 CP、男频/女频、力量规则、终局结局等硬约束。
 6. 简介中的“哥哥们/其他哥哥”可以扩展为桑二、桑三、桑四、桑五等具名兄弟；这类扩展必须降权为生活职业或凡人社会职能，具备私欲、缺陷、具体伏笔和独立弧光，不得被判为“未在事实裁决中具名”的冲突。
-7. “师尊/掌门/悔恨而死/被重创”这类称谓和命运并存时，优先解释为同一角色的公开伪装、实权身份和连续因果；只有同时出现两个不同姓名或互斥时间线时才判为身份矛盾。`;
+7. “师尊/掌门/悔恨而死/被重创”这类称谓和命运并存时，优先解释为同一角色的公开伪装、实权身份和连续因果；只有同时出现两个不同姓名或互斥时间线时才判为身份矛盾。
+8. ${getNovelStyleConstraint(novel)}`;
 }
 
 function updateMasterOutlineAsset(novel) {
@@ -3277,9 +5363,6 @@ async function reconcileCharacterCanon(novel, onStatus) {
   if (result.needsOutlineRepair) {
     novel.masterOutline = repairedOutline;
     updateMasterOutlineAsset(novel);
-    novel.characterBible = [];
-    novel.characterRelations = [];
-    novel.assets = (novel.assets || []).filter(asset => !CHARACTER_TYPE_ORDER.includes(asset.type));
     refreshNovelKnowledgeGraph(novel);
     saveState();
     void persistNovelKnowledgeGraph(novel);
@@ -3302,7 +5385,7 @@ async function reconcileCharacterCanon(novel, onStatus) {
   return canon;
 }
 
-function runStaticCharacterAudit(characters, relations, targetCount) {
+function runStaticCharacterAudit(characters, relations, targetCount, canon = null, novel = null) {
   const names = characters.map(character => character.name);
   const nameSet = new Set(names);
   const duplicateNames = names.filter((name, index) => names.indexOf(name) !== index);
@@ -3319,7 +5402,7 @@ function runStaticCharacterAudit(characters, relations, targetCount) {
   });
   const protagonistTemplatePollution = characters
     .filter(character =>
-      (character.roleTier === '核心主角' || /(主角|女主|男主|核心视角)/.test(`${character.identity} ${character.storyFunction}`)) &&
+      isCoreProtagonistCharacter(character, canon, novel) &&
       /(维护.*清白名声|转嫁过错|伪造问责流程|借.*审判压制异议|保住.*宗门体面|戒律审判)/.test(
         `${character.desire} ${character.goal} ${character.interests} ${character.agency}`
       )
@@ -3328,9 +5411,7 @@ function runStaticCharacterAudit(characters, relations, targetCount) {
   const protagonistIdentityLeaks = characters
     .filter(character => {
       const characterText = `${character.name} ${character.identity} ${character.publicIdentity} ${character.roleTier} ${character.storyFunction}`;
-      const isViewpointProtagonist = /(桑杳|桑查)/.test(characterText) ||
-        (character.roleTier === '核心主角' && !/(苏清歌|小师妹|气运女主|天命女主)/.test(characterText));
-      return !isViewpointProtagonist &&
+      return !isCoreProtagonistCharacter(character, canon, novel) &&
         /(风暴使者|潜在.*职责|连接情感|羁绊.*觉醒)/.test(`${(character.hiddenIdentities || []).join(' ')} ${character.identityRevealStage || ''}`);
     })
     .map(character => character.name);
@@ -3708,7 +5789,7 @@ async function repairCharacterSystem(context, characters, relations, audit, onSt
       `你是人物体系修复 Agent。只返回 JSON，不要代码围栏：
 {"characters":[完整人物对象]}
 
-保持姓名不变，完整返回指定人物的所有原字段。严格根据审计问题修复身份、多重身份、势力、关系、总纲锚点、人物弧光、高光、命运和活人感。不得通过删除欲望、冲突或自主性来消除矛盾。
+保持姓名不变，完整返回指定人物的所有原字段。严格根据审计问题修复身份、多重身份、势力、关系、总纲对应情节、人物弧光、高光、命运和活人感。不得通过删除欲望、冲突或自主性来消除矛盾。
 每条审计问题只作用于明确点名的人物，严禁把其他角色的欲望、目标、行为、弧光、高光或命运复制到本批人物。主角、家人、反派、证人和中立角色的功能边界不得互换。
 本批最多 2 人，必须输出完整闭合 JSON；字段文本保持简洁，避免长段落导致截断。`,
       `${context}
@@ -4951,7 +7032,7 @@ async function generateCompleteRoster({
 7. 本轮重点补充：${roleFocuses[attempt % roleFocuses.length]}。
 8. 只生成本轮新增人物，不得复述、改写或补全已有名册人物。
 9. 输出保持简洁，每个字段控制在 30 字以内，确保 JSON 完整闭合。
-10. 可用世界观锚点：${worldAnchors.join('；')}。`,
+10. 可用世界观依据：${worldAnchors.join('；')}。`,
         `${context}
 用户任务：${task}
 禁止使用的已有姓名：${existingNames.length ? JSON.stringify(existingNames) : '无'}
@@ -5058,6 +7139,21 @@ class AgentStateManager {
         { id: 'topology', name: '关系拓扑' },
         { id: 'audit', name: '逻辑审计' },
         { id: 'review', name: '完成协同' }
+      ];
+    } else if (this.taskType === 'plot') {
+      this.nodes = [
+        { id: 'architecture', name: '卷级架构' },
+        { id: 'chapters', name: '章节编排' },
+        { id: 'validation', name: '因果审计' },
+        { id: 'review', name: '人工审核' }
+      ];
+    } else if (this.taskType === 'final-audit') {
+      this.nodes = [
+        { id: 'hard-check', name: '规则硬检' },
+        { id: 'cross-audit', name: '跨域终审' },
+        { id: 'repair', name: '定向修复' },
+        { id: 'final-review', name: '全书复审' },
+        { id: 'review', name: '人工审核' }
       ];
     } else {
       this.nodes = [
@@ -5391,6 +7487,10 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
   let relations = normalizeAndHealRelations(topologyResult.relations, finalCharacters, targetCount);
   relations = stabilizeKeyRelations(relations);
   applyFactionReplacementsToCharacters(finalCharacters, relations, canon, novel);
+  if (getNovelStylePolicy(novel).premodern) {
+    replaceStoryStyleTerms(finalCharacters, PREMODERN_STYLE_REPLACEMENTS, 'characters');
+    replaceStoryStyleTerms(relations, PREMODERN_STYLE_REPLACEMENTS, 'relations');
+  }
   if (relations.length < targetCount) {
     console.warn(`人物关系拓扑不足自愈警告：仅有 ${relations.length} 条有效关系，小于要求的 ${targetCount} 条。`);
   }
@@ -5417,6 +7517,9 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
     );
     finalCharacters = repairedReconciliation.characters;
     applyDeterministicCharacterRepairs(finalCharacters, canon, novel);
+    if (getNovelStylePolicy(novel).premodern) {
+      replaceStoryStyleTerms(finalCharacters, PREMODERN_STYLE_REPLACEMENTS, 'characters');
+    }
     const repairedNames = finalCharacters.map(character => character.name);
     const repairedIncomplete = finalCharacters.filter(character =>
       requiredFields.some(field => !character[field]) ||
@@ -5437,9 +7540,13 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
     relations = normalizeAndHealRelations(repaired.relations, finalCharacters, targetCount);
     relations = stabilizeKeyRelations(relations);
     applyFactionReplacementsToCharacters(finalCharacters, relations, canon, novel);
+    if (getNovelStylePolicy(novel).premodern) {
+      replaceStoryStyleTerms(finalCharacters, PREMODERN_STYLE_REPLACEMENTS, 'characters');
+      replaceStoryStyleTerms(relations, PREMODERN_STYLE_REPLACEMENTS, 'relations');
+    }
   };
 
-  let staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount);
+  let staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount, canon, novel);
   let audit = await auditCharacterSystem(context, finalCharacters, relations, staticAudit, auditOnStatus);
   const hasSevereIssues = audit.issues.some(issue => ['critical', 'high'].includes(issue.severity));
   if (!staticAudit.passed || !audit.passed || audit.score < 85 || hasSevereIssues) {
@@ -5458,7 +7565,7 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
     );
     applyRepairResult(repaired);
 
-    staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount);
+    staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount, canon, novel);
     const reauditOnStatus = status => onStatus(status, '人物复审 Agent', 95);
     audit = await auditCharacterSystem(context, finalCharacters, relations, staticAudit, reauditOnStatus);
   }
@@ -5507,7 +7614,7 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
       status => onStatus(status, repairRound === 0 ? '人物二次修复 Agent' : '人物自动修复 Agent', 98)
     );
     applyRepairResult(repaired);
-    staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount);
+    staticAudit = runStaticCharacterAudit(finalCharacters, relations, targetCount, canon, novel);
     audit = await auditCharacterSystem(context, finalCharacters, relations, staticAudit, status =>
       onStatus(status, repairRound === maxRepairRounds - 1 ? '人物终复审 Agent' : '人物复审 Agent', 99)
     );
@@ -5571,12 +7678,26 @@ ${synopsis}`;
   return '未识别';
 }
 
+const NOVEL_WORLD_TYPE_PATTERN = /(架空古代|古武都市|现代都市|都市异能|东方玄幻|西方奇幻|修仙|仙侠|武侠|末世|星际|科幻|赛博朋克|历史架空|现代言情|古代言情|校园|职场|悬疑|无限流)/;
+
+function validateNovelBackground(background) {
+  const issues = [];
+  if (!/(男频|女频)/.test(background)) {
+    issues.push('必须明确写出“男频”或“女频”');
+  }
+  if (!NOVEL_WORLD_TYPE_PATTERN.test(background)) {
+    issues.push('必须明确时代或世界类型，例如“架空古代、古武都市、现代都市、东方玄幻、修仙、末世、星际”');
+  }
+  return issues;
+}
+
 function parseNovelBriefInput(rawInput) {
-  if (!/背景设定\s*[：:]/.test(rawInput) || !/简介\s*[：:]/.test(rawInput)) {
+  if (!/背景设定\s*[：:]/.test(rawInput)) {
     return null;
   }
-  const background = extractBracketValue(rawInput, '背景设定', '简介');
-  const synopsis = extractBracketValue(rawInput, '简介');
+  const hasSynopsis = /简介\s*[：:]/.test(rawInput);
+  const background = extractBracketValue(rawInput, '背景设定', hasSynopsis ? '简介' : '');
+  const synopsis = hasSynopsis ? extractBracketValue(rawInput, '简介') : '';
   if (!background) return null;
   return {
     background,
@@ -5596,6 +7717,10 @@ function resetDerivedNovelData(novel) {
   novel.promiseLedger = [];
   novel.stateLedger = [];
   novel.outlineAudit = null;
+  novel.plotBlueprint = null;
+  novel.plotBlueprintDraft = null;
+  novel.finalAudit = null;
+  novel.finalOutline = null;
   novel.characterBible = [];
   novel.characterRelations = [];
   novel.characterAudit = null;
@@ -5756,7 +7881,7 @@ function reviewCharacterSystem(result) {
       <p><b>人物弧光：</b>${escapeHtml(character.arc)}</p>
       <p><b>高光时刻：</b>${escapeHtml(character.highlight)}</p>
       <p><b>最终命运：</b>${escapeHtml(character.fate)}</p>
-      <p><b>总纲锚点：</b>${escapeHtml(character.plotAnchor)}</p>
+      <p><b>总纲对应情节：</b>${escapeHtml(character.plotAnchor)}</p>
     </article>
   `).join('');
   elements.characterReviewModal.classList.remove('hidden');
@@ -5820,7 +7945,7 @@ function syncCharacterFromAsset(novel, asset) {
     ability: '能力与资源',
     weakness: '缺陷与代价',
     settingBasis: '设定依据',
-    plotAnchor: '总纲锚点',
+    plotAnchor: '总纲对应情节',
     foreshadowLink: '伏笔与回收链',
     lifeHistory: '人物生平',
     growthHistory: '成长史',
@@ -5829,7 +7954,8 @@ function syncCharacterFromAsset(novel, asset) {
     fate: '最终命运'
   };
   Object.entries(fieldMap).forEach(([field, label]) => {
-    const value = extractMarkdownField(asset.desc, label);
+    const value = extractMarkdownField(asset.desc, label) ||
+      (field === 'plotAnchor' ? extractMarkdownField(asset.desc, '总纲锚点') : '');
     if (value) character[field] = value;
   });
   character.hiddenIdentities = extractMarkdownList(asset.desc, '隐藏身份');
@@ -5839,9 +7965,12 @@ function syncCharacterFromAsset(novel, asset) {
 }
 
 function refreshTopologyAsset(novel) {
-  const topologyAsset = novel.assets.find(asset => asset.type === 'character-network');
-  if (!topologyAsset) return;
   const refreshed = topologyToAsset(novel.characterRelations || [], novel.id);
+  const topologyAsset = novel.assets.find(asset => asset.type === 'character-network');
+  if (!topologyAsset) {
+    novel.assets.push(refreshed);
+    return;
+  }
   topologyAsset.name = refreshed.name;
   topologyAsset.desc = refreshed.desc;
 }
@@ -5858,9 +7987,9 @@ function removeCharacterFromNovel(novel, characterName) {
 }
 
 function characterToAsset(character, novelId, index) {
-  const relationships = character.relationships.map(relation =>
+  const relationships = (character.relationships || []).map(relation =>
     `- **${relation.target}｜${relation.type}**：${relation.dynamic}；冲突：${relation.conflict}`
-  ).join('\n');
+  ).join('\n') || '暂无直接关系';
   return {
     id: `character-${novelId}-${index}-${Date.now()}`,
     group: 'character-growth',
@@ -5889,7 +8018,7 @@ function characterToAsset(character, novelId, index) {
 - **能力与资源**：${character.ability}
 - **缺陷与代价**：${character.weakness}
 - **设定依据**：${character.settingBasis}
-- **总纲锚点**：${character.plotAnchor}
+- **总纲对应情节**：${character.plotAnchor}
 - **伏笔与回收链**：${character.foreshadowLink}
 
 ## 人生轨迹
@@ -5921,10 +8050,296 @@ ${relationLines}`
   };
 }
 
+function plotSystemToAssets(result, novelId) {
+  const now = Date.now();
+  const assets = [];
+  result.architecture.volumes.forEach((volume, index) => {
+    assets.push({
+      id: `volume-outline-${novelId}-${index}-${now}`,
+      group: 'plot-framework',
+      type: 'volume-outline',
+      name: `${String(index + 1).padStart(2, '0')}｜${volume.title}（${volume.chapterStart}-${volume.chapterEnd}章）`,
+      desc: `卷首状态：${volume.startState}
+卷目标：${volume.volumeGoal}
+核心冲突：${volume.primaryConflict}
+群像线：${volume.ensembleThreads.join('；')}
+中点转折：${volume.midpointTurn}
+卷低谷：${volume.lowPoint}
+卷高潮：${volume.climax}
+卷末状态：${volume.endState}
+下一卷钩子：${volume.nextHook}`
+    });
+  });
+  result.chapters.forEach(chapter => {
+    assets.push({
+      id: `chapter-outline-${novelId}-${chapter.chapterNumber}-${now}`,
+      group: 'plot-framework',
+      type: 'chapter-outline',
+      name: `${String(chapter.chapterNumber).padStart(3, '0')}｜${chapter.title}`,
+      desc: `时间：${chapter.time}
+地点：${chapter.location}
+视角：${chapter.viewpoint}
+参与人物：${chapter.participants.join('、')}
+叙事线：${chapter.threadIds.join('、') || '主线'}
+前置章节：${chapter.prerequisiteChapterIds.join('、') || '无'}
+章首状态：${chapter.openingState}
+人物目标：${chapter.characterGoal}
+主动行动：${chapter.characterAction}
+阻力：${chapter.opposition}
+冲突：${chapter.conflict}
+因果理由：${chapter.causalReason}
+剧情梗概：${chapter.plotSummary}
+转折：${chapter.turn}
+代价：${chapter.cost}
+资源与道具：${chapter.resourcesUsed.map(resource => `${resource.name}（来源：${resource.origin}；代价：${resource.cost}）`).join('；') || '无'}
+新增元素：${chapter.newElements.map(element => `${element.type}｜${element.name}（来源：${element.origin}；用途：${element.purpose}）`).join('；') || '无'}
+信息变化：${chapter.knowledgeDelta}
+关系变化：${chapter.relationshipDelta}
+状态变化：${chapter.stateDelta}
+情绪曲线：${chapter.emotionalCurve}
+埋设伏笔：${chapter.plantedClues.join('、') || '无'}
+回收伏笔：${chapter.paidClues.join('、') || '无'}
+章末钩子：${chapter.endingHook}`
+    });
+  });
+  assets.push({
+    id: `plot-causal-${novelId}-${now}`,
+    group: 'plot-framework',
+    type: 'plot-causal-chain',
+    name: `全书剧情因果链（${result.chapterCount}章）`,
+    desc: result.chapters.map(chapter =>
+      `${chapter.id} <- [${chapter.prerequisiteChapterIds.join('、') || '总纲起点'}]｜${chapter.characterAction} -> ${chapter.stateDelta}`
+    ).join('\n')
+  });
+  assets.push({
+    id: `plot-timeline-${novelId}-${now}`,
+    group: 'plot-framework',
+    type: 'plot-timeline',
+    name: '时间、空间与群像多线',
+    desc: `## 叙事线
+${result.architecture.narrativeThreads.map(thread =>
+      `- ${thread.name}：${thread.startState} -> ${thread.endState}｜驱动人物：${thread.driverCharacters.join('、')}｜交汇：${thread.intersections.join('；')}`
+    ).join('\n')}
+
+## 时空推进
+${result.chapters.map(chapter => `- 第${chapter.chapterNumber}章｜${chapter.time}｜${chapter.location}｜${chapter.viewpoint}`).join('\n')}`
+  });
+  assets.push({
+    id: `plot-audit-${novelId}-${now}`,
+    group: 'plot-framework',
+    type: 'plot-audit',
+    name: `剧情审计报告（${result.audit.score}分）`,
+    desc: `${result.audit.summary}
+
+${result.audit.issues.map(issue =>
+      `- [${issue.severity}] ${issue.category || issue.domain || '综合'}：${issue.problem}｜修复：${issue.repair || issue.repairInstruction || '人工复核'}`
+    ).join('\n')}`
+  });
+  return assets;
+}
+
+function finalNovelAuditToAssets(result, novelId) {
+  const now = Date.now();
+  const outline = result.finalOutline || {};
+  return [
+    {
+      id: `final-outline-${novelId}-${now}`,
+      group: 'plot-framework',
+      type: 'final-outline',
+      name: `最终综合大纲（${result.chapterCount}章）`,
+      desc: `# 作品定位
+${outline.positioning || ''}
+
+# 开始
+${outline.beginning || ''}
+
+# 发展
+${outline.development || ''}
+
+# 高潮
+${outline.climax || ''}
+
+# 结局
+${outline.ending || ''}
+
+# 核心因果链
+${outline.coreCausalChain || ''}
+
+# 三幕N线群像结构
+${outline.ensembleStructure || ''}
+
+# 悬疑、伏笔与回收
+${outline.suspenseAndPayoff || ''}
+
+# 全书情绪曲线
+${outline.emotionalCurve || ''}`
+    },
+    {
+      id: `final-audit-${novelId}-${now}`,
+      group: 'plot-framework',
+      type: 'final-audit',
+      name: `全书终审报告（${result.audit.score}分）`,
+      desc: `${result.audit.summary}
+
+程序硬校验：通过
+程序初检：${result.audit.initialStaticScore}分
+全书复审：${result.audit.score}分
+人物标注归一化：${result.audit.normalizedReferenceCount || 0}处
+伏笔自动补种：${result.audit.autoPlantedClueCount || 0}条
+时代风格修正：${result.audit.styleRepairCount || 0}处
+定向修复：${result.audit.repairedIssueCount || 0}项
+人物：${result.audit.staticAudit.metrics.characterCount}
+关系：${result.audit.staticAudit.metrics.relationCount}
+章节：${result.audit.staticAudit.metrics.chapterCount}
+活跃人物：${result.audit.staticAudit.metrics.activeCharacterCount}
+伏笔埋设/回收：${result.audit.staticAudit.metrics.seededClueCount}/${result.audit.staticAudit.metrics.paidClueCount}
+
+${result.audit.issues.map(issue =>
+    `- [${issue.severity}] ${issue.domain || issue.category}｜${issue.target || '全局'}：${issue.problem}｜修复：${issue.repairInstruction || issue.repair || '人工复核'}`
+  ).join('\n')}`
+    }
+  ];
+}
+
+function reviewPlotSystem(result, mode = 'plot') {
+  const finalAuditMode = mode === 'final-audit';
+  elements.plotReviewTitle.textContent = finalAuditMode ? '审核全书最终大纲' : '审核章节剧情细纲';
+  elements.plotReviewSubtitle.textContent = finalAuditMode
+    ? '程序硬校验已通过。确认后才会应用跨域修复，并同步人物、关系、章节、伏笔、知识图谱与最终综合大纲。'
+    : '审核通过后，卷纲、章节细纲、因果链、伏笔链与时空多线才会写入左侧设定库。';
+  elements.plotReviewChapterCount.textContent = result.chapterCount;
+  elements.plotReviewVolumeCount.textContent = result.architecture.volumes.length;
+  elements.plotAuditScore.textContent = result.audit.score;
+  elements.plotReviewReport.classList.toggle('audit-warning', result.audit.requiresHumanReview);
+  elements.plotReviewReport.innerHTML = `
+    <strong>${finalAuditMode ? '全书终审结论' : '审计结论'}：</strong>${escapeHtml(result.audit.summary || '章节细纲已完成。')}
+    ${finalAuditMode ? `<div><strong>评分：</strong>初检 ${result.audit.initialStaticScore} 分，复审 ${result.audit.score} 分；人物标注归一化 ${result.audit.normalizedReferenceCount || 0} 处，伏笔补种 ${result.audit.autoPlantedClueCount || 0} 条，时代风格修正 ${result.audit.styleRepairCount || 0} 处，定向修复 ${result.audit.repairedIssueCount || 0} 项。</div>` : ''}
+    ${result.audit.requiresHumanReview ? '<div><strong>状态：</strong>程序硬校验通过，AI 质量评分未达到自动通过线，请人工审核。</div>' : ''}
+    ${result.audit.issues.length ? `<ul>${result.audit.issues.slice(0, 12).map(issue =>
+      `<li>[${escapeHtml(issue.severity || 'medium')}] ${escapeHtml(issue.domain || issue.category || '综合')}：${escapeHtml(issue.problem || '')}</li>`
+    ).join('')}</ul>` : ''}
+  `;
+  elements.plotReviewList.innerHTML = result.architecture.volumes.map(volume => {
+    const chapters = result.chapters.filter(chapter => chapter.volumeId === volume.id);
+    return `<section class="plot-review-volume">
+      <h4>${escapeHtml(volume.title)} · 第${volume.chapterStart}-${volume.chapterEnd}章</h4>
+      <p><b>目标：</b>${escapeHtml(volume.volumeGoal)}　<b>高潮：</b>${escapeHtml(volume.climax)}</p>
+      <div>${chapters.map(chapter =>
+        `<article><strong>${String(chapter.chapterNumber).padStart(3, '0')}｜${escapeHtml(chapter.title)}</strong>
+        <span>${escapeHtml(chapter.viewpoint)} · ${escapeHtml(chapter.location)}</span>
+        <p>${escapeHtml(chapter.plotSummary)}</p>
+        <p><b>转折：</b>${escapeHtml(chapter.turn)}　<b>章末：</b>${escapeHtml(chapter.endingHook)}</p></article>`
+      ).join('')}</div>
+    </section>`;
+  }).join('');
+  elements.plotReviewModal.classList.remove('hidden');
+  return new Promise(resolve => {
+    const finish = approved => {
+      elements.plotReviewModal.classList.add('hidden');
+      elements.approvePlotBtn.removeEventListener('click', approve);
+      elements.rejectPlotBtn.removeEventListener('click', reject);
+      resolve(approved);
+    };
+    const approve = () => finish(true);
+    const reject = () => finish(false);
+    elements.approvePlotBtn.addEventListener('click', approve);
+    elements.rejectPlotBtn.addEventListener('click', reject);
+  });
+}
+
 /* ==========================================================================
    Event Listeners Setup
    ========================================================================== */
 function initEvents() {
+  const fillTaskFromWorkflowStep = step => {
+    const title = step.querySelector('strong')?.textContent.trim() || '';
+    const command = step.querySelector('code')?.textContent.trim() || '';
+    const description = step.querySelector('span')?.textContent.trim() || '';
+    elements.agentTaskTextarea.value = [title, command, description]
+      .filter(Boolean)
+      .join('\n\n');
+    elements.agentTaskTextarea.style.height = 'auto';
+    elements.agentTaskTextarea.style.height = `${elements.agentTaskTextarea.scrollHeight}px`;
+    elements.agentTaskTextarea.focus();
+    elements.agentTaskTextarea.setSelectionRange(
+      elements.agentTaskTextarea.value.length,
+      elements.agentTaskTextarea.value.length
+    );
+  };
+  document.querySelectorAll('.workflow-step').forEach(step => {
+    step.addEventListener('click', () => fillTaskFromWorkflowStep(step));
+    step.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      fillTaskFromWorkflowStep(step);
+    });
+  });
+
+  const closeGraphEditor = () => elements.graphEditModal.classList.add('hidden');
+  elements.closeGraphEditModal.addEventListener('click', closeGraphEditor);
+  document.querySelectorAll('.graph-edit-cancel').forEach(button => {
+    button.addEventListener('click', closeGraphEditor);
+  });
+  elements.graphAddRelation.addEventListener('click', () => {
+    const novel = getActiveNovel();
+    if (!novel?.characterBible?.length) {
+      showToast('当前没有可建立关系的人物。', 'error');
+      return;
+    }
+    openRelationGraphEditor(novel, -1);
+  });
+  elements.graphCharacterForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const novel = getActiveNovel();
+    try {
+      updateCharacterGlobally(novel, elements.graphCharacterOriginalName.value, {
+        name: elements.graphCharacterName.value.trim(),
+        identity: elements.graphCharacterIdentity.value.trim(),
+        publicIdentity: elements.graphCharacterIdentity.value.trim(),
+        faction: elements.graphCharacterFaction.value.trim(),
+        personality: elements.graphCharacterPersonality.value.trim(),
+        desire: elements.graphCharacterDesire.value.trim(),
+        goal: elements.graphCharacterGoal.value.trim(),
+        interests: elements.graphCharacterInterests.value.trim(),
+        arc: elements.graphCharacterArc.value.trim(),
+        highlight: elements.graphCharacterHighlight.value.trim(),
+        fate: elements.graphCharacterFate.value.trim()
+      });
+      closeGraphEditor();
+      showToast('人物已修改，并同步到关系、章节细纲和知识图谱。', 'success');
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+  elements.graphRelationForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const novel = getActiveNovel();
+    try {
+      updateRelationGlobally(novel, Number(elements.graphRelationIndex.value), {
+        source: elements.graphRelationSource.value,
+        target: elements.graphRelationTarget.value,
+        type: elements.graphRelationType.value.trim(),
+        direction: elements.graphRelationDirection.value,
+        description: elements.graphRelationDescription.value.trim(),
+        interestConflict: elements.graphRelationConflict.value.trim()
+      });
+      closeGraphEditor();
+      showToast('人物关系已修改，并同步到人物档案和知识图谱。', 'success');
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+  elements.deleteGraphRelationBtn.addEventListener('click', () => {
+    const novel = getActiveNovel();
+    const relationIndex = Number(elements.graphRelationIndex.value);
+    const relation = novel?.characterRelations?.[relationIndex];
+    if (!relation || !confirm(`确定删除“${relation.source} → ${relation.target}”关系吗？`)) return;
+    novel.characterRelations.splice(relationIndex, 1);
+    commitGraphEdit(novel);
+    closeGraphEditor();
+    showToast('关系已删除并完成全局同步。', 'success');
+  });
+
   elements.closeNovelInfoModal.addEventListener('click', closeNovelInfoModal);
   elements.cancelNovelInfo.addEventListener('click', closeNovelInfoModal);
   elements.novelInfoForm.addEventListener('submit', (e) => {
@@ -5983,6 +8398,10 @@ function initEvents() {
       const activeNovel = getActiveNovel();
       const parsedBrief = parseNovelBriefInput(task);
       if (parsedBrief) {
+        const backgroundIssues = validateNovelBackground(parsedBrief.background);
+        if (backgroundIssues.length) {
+          throw new Error(`背景设定不完整：${backgroundIssues.join('；')}。`);
+        }
         elements.agentTaskStatusText.textContent = '已识别背景设定与简介，正在保存独立文件...';
         const savedFile = await saveNovelBriefFile(activeNovel, parsedBrief, task);
         resetDerivedNovelData(activeNovel);
@@ -6007,7 +8426,139 @@ function initEvents() {
       }
 
       if (!state.apiKey) {
-        throw new Error('内容已保存，但尚未配置 API Key，无法启动多 Agent。');
+        throw new Error('内容已保存，但尚未配置 API Key，无法开始执行。');
+      }
+
+      if (isFinalNovelAuditTask(task)) {
+        stateManager = new AgentStateManager('final-audit');
+        const finalResult = await buildFinalNovelAudit(task, (status, agentName = '全书终审 Agent', progressPercentage) => {
+          if (progressPercentage !== undefined) stateManager.updateProgress(progressPercentage);
+          const type = status.includes('错误') || status.includes('失败')
+            ? 'error'
+            : status.includes('完成') || status.includes('通过')
+              ? 'success'
+              : 'agent';
+          stateManager.log(agentName, status, type);
+        }, stateManager);
+        heartbeatState.pendingReview = '全书最终大纲';
+        saveHeartbeatState();
+        stateManager.success(
+          '全书终审完成，等待人工确认',
+          `初检 ${finalResult.audit.initialStaticScore} 分，复审 ${finalResult.audit.score} 分；程序硬校验通过，已审查 ${finalResult.characters.length} 个人物、${finalResult.relations.length} 条关系和 ${finalResult.chapterCount} 章细纲。`,
+          async () => {
+            const approved = await reviewPlotSystem(finalResult, 'final-audit');
+            delete heartbeatState.pendingReview;
+            saveHeartbeatState();
+            if (!approved) {
+              showToast('全书终审结果已退回，现有人物和章节未被修改。', 'info');
+              return;
+            }
+            activeNovel.characterBible = finalResult.characters;
+            activeNovel.characterRelations = finalResult.relations;
+            activeNovel.promiseLedger = finalResult.promiseLedger;
+            activeNovel.plotBlueprint = {
+              ...activeNovel.plotBlueprint,
+              chapterCount: finalResult.chapterCount,
+              architecture: finalResult.architecture,
+              chapters: finalResult.chapters,
+              audit: finalResult.audit,
+              finalAudit: finalResult.audit,
+              updatedAt: new Date().toISOString()
+            };
+            const finalOutline = finalResult.finalOutline || {};
+            if (finalOutline.positioning) activeNovel.analysisSummary = finalOutline.positioning;
+            ['beginning', 'development', 'climax', 'ending'].forEach(stage => {
+              if (finalOutline[stage]) activeNovel.masterOutline[stage] = finalOutline[stage];
+            });
+            activeNovel.finalAudit = finalResult.audit;
+            activeNovel.finalOutline = finalOutline;
+            const plotTypes = new Set([
+              'volume-outline', 'chapter-outline', 'plot-causal-chain', 'plot-timeline',
+              'plot-audit', 'final-outline', 'final-audit'
+            ]);
+            activeNovel.assets = [
+              ...activeNovel.assets.filter(asset => !plotTypes.has(asset.type)),
+              ...plotSystemToAssets(finalResult, activeNovel.id),
+              ...finalNovelAuditToAssets(finalResult, activeNovel.id)
+            ];
+            updateMasterOutlineAsset(activeNovel);
+            syncEmbeddedCharacterRelationships(activeNovel);
+            rebuildDerivedCharacterAssets(activeNovel);
+            consolidatePromiseLedgerAssets(activeNovel);
+            extendCategoryOrderForNarrativeCompiler(activeNovel);
+            refreshNovelKnowledgeGraph(activeNovel);
+            saveState();
+            void persistNovelKnowledgeGraph(activeNovel);
+            renderNovels();
+            elements.agentTaskTextarea.value = '';
+            elements.agentTaskTextarea.style.height = 'auto';
+            showToast('全书终审修复与最终综合大纲已应用。', 'success');
+          }
+        );
+        return;
+      }
+
+      if (isPlotDesignTask(task)) {
+        stateManager = new AgentStateManager('plot');
+        const plotResult = await buildPlotSystem(task, (status, agentName = '剧情编排 Agent', progressPercentage) => {
+          if (progressPercentage !== undefined) stateManager.updateProgress(progressPercentage);
+          let type = 'info';
+          if (status.includes('失败') || status.includes('硬错误')) type = 'error';
+          else if (status.includes('通过') || status.includes('完成') || status.includes('提交人工复核')) type = 'success';
+          else type = 'agent';
+          stateManager.log(agentName, status, type);
+        }, stateManager);
+
+        delete heartbeatState.lastFailure;
+        delete heartbeatState.lastFailureAt;
+        activeNovel.plotBlueprintDraft = {
+          chapterCount: plotResult.chapterCount,
+          architecture: plotResult.architecture,
+          chapters: plotResult.chapters,
+          audit: plotResult.audit,
+          updatedAt: new Date().toISOString()
+        };
+        saveState();
+        heartbeatState.pendingReview = `章节剧情细纲（${plotResult.chapterCount} 章）`;
+        saveHeartbeatState();
+        stateManager.success(
+          plotResult.audit.requiresHumanReview ? '章节细纲已生成，需人工复核' : '章节细纲构建成功',
+          `已完成 ${plotResult.architecture.volumes.length} 卷、${plotResult.chapterCount} 章细纲，剧情审计 ${plotResult.audit.score} 分。`,
+          async () => {
+            const approved = await reviewPlotSystem(plotResult);
+            delete heartbeatState.pendingReview;
+            saveHeartbeatState();
+            if (!approved) {
+              delete activeNovel.plotBlueprintDraft;
+              saveState();
+              showToast('章节剧情细纲已退回，现有剧情规划未被覆盖。', 'info');
+              return;
+            }
+            const plotTypes = new Set([
+              'volume-outline', 'chapter-outline', 'plot-causal-chain', 'plot-timeline',
+              'plot-audit', 'final-outline', 'final-audit'
+            ]);
+            activeNovel.assets = [
+              ...activeNovel.assets.filter(asset => !plotTypes.has(asset.type)),
+              ...plotSystemToAssets(plotResult, activeNovel.id)
+            ];
+            activeNovel.plotBlueprint = {
+              chapterCount: plotResult.chapterCount,
+              architecture: plotResult.architecture,
+              chapters: plotResult.chapters,
+              audit: plotResult.audit,
+              updatedAt: new Date().toISOString()
+            };
+            delete activeNovel.plotBlueprintDraft;
+            extendCategoryOrderForNarrativeCompiler(activeNovel);
+            refreshNovelKnowledgeGraph(activeNovel);
+            saveState();
+            void persistNovelKnowledgeGraph(activeNovel);
+            renderNovels();
+            showToast(`${plotResult.chapterCount} 章剧情细纲已写入左侧设定库。`, 'success');
+          }
+        );
+        return;
       }
 
       if (isCharacterBuildingTask(task)) {
@@ -6042,8 +8593,13 @@ function initEvents() {
               return;
             }
 
+            const derivedPlotTypes = new Set([
+              'volume-outline', 'chapter-outline', 'plot-causal-chain', 'plot-timeline',
+              'plot-audit', 'final-outline', 'final-audit'
+            ]);
             const preservedAssets = activeNovel.assets.filter(asset =>
-              !CHARACTER_TYPE_ORDER.includes(asset.type)
+              !CHARACTER_TYPE_ORDER.includes(asset.type) &&
+              !derivedPlotTypes.has(asset.type)
             );
             const characterAssets = characterResult.characters.map((character, index) =>
               characterToAsset(character, activeNovel.id, index)
@@ -6056,6 +8612,7 @@ function initEvents() {
             activeNovel.characterBible = characterResult.characters;
             activeNovel.characterRelations = characterResult.relations;
             activeNovel.characterAudit = characterResult.audit;
+            activeNovel.plotBlueprint = null;
             if (!activeNovel.categoryOrder) {
               activeNovel.categoryOrder = {};
             }
@@ -6096,7 +8653,7 @@ function initEvents() {
       saveHeartbeatState();
       stateManager.success(
         '全书总纲生成成功',
-        '多 Agent 团队已完成世界观、角色、剧情、市场定位分析与总编整合。',
+        '系统已完成世界观、角色、剧情、市场定位分析与总编整合。',
         async () => {
           elements.agentTaskStatusText.textContent = '总纲已生成，等待用户审核...';
           const approved = await reviewMasterOutline(result);
@@ -6106,8 +8663,19 @@ function initEvents() {
             showToast('总纲已退回，现有设定库未被覆盖。', 'info');
             return;
           }
-          activeNovel.assets = result.assets;
+          const existingCharacterAssets = activeNovel.assets.filter(asset =>
+            asset.characterName || asset.type === 'character-network'
+          );
+          const generatedAssets = activeNovel.characterBible?.length
+            ? result.assets.filter(asset => !CHARACTER_TYPE_ORDER.includes(asset.type))
+            : result.assets;
+          activeNovel.assets = [
+            ...generatedAssets,
+            ...existingCharacterAssets
+          ];
           applyNarrativeBlueprintResult(activeNovel, result);
+          consolidatePromiseLedgerAssets(activeNovel);
+          ensureCharacterDerivedAssets(activeNovel);
           extendCategoryOrderForNarrativeCompiler(activeNovel);
           if (activeNovel.activeTarget.type === 'asset') {
             activeNovel.activeTarget = { type: 'chapter', id: activeNovel.currentChapterId };
@@ -6122,7 +8690,7 @@ function initEvents() {
           switchEditorTarget(activeNovel.activeTarget.type, activeNovel.activeTarget.id);
           elements.agentTaskTextarea.value = '';
           elements.agentTaskTextarea.style.height = 'auto';
-          showToast('多 Agent 任务已完成，左侧设定库已更新。', 'success');
+          showToast('任务已完成，左侧设定库已更新。', 'success');
         }
       );
     } catch (error) {
@@ -6132,7 +8700,7 @@ function initEvents() {
       if (stateManager) {
         stateManager.failure(error.message);
       } else {
-        showToast(`多 Agent 任务失败：${error.message}`, 'error');
+        showToast(`任务执行失败：${error.message}`, 'error');
       }
     } finally {
       elements.agentTaskSendBtn.disabled = false;
@@ -6172,8 +8740,9 @@ function initEvents() {
       showNewNovelError('背景设定为必填项。');
       return;
     }
-    if (!/(男频|女频)/.test(background)) {
-      showNewNovelError('背景设定必须明确写出“男频”或“女频”。');
+    const backgroundIssues = validateNovelBackground(background);
+    if (backgroundIssues.length) {
+      showNewNovelError(`背景设定不完整：${backgroundIssues.join('；')}。`);
       elements.newNovelBackground.focus();
       return;
     }
@@ -6278,7 +8847,7 @@ function initEvents() {
       renderNovels();
       elements.newNovelModal.classList.add('hidden');
       elements.newNovelForm.reset();
-      showToast(`《${name}》已创建，多 Agent 设定库已自动填充。`, 'success');
+      showToast(`《${name}》已创建，设定库已自动填充。`, 'success');
     } catch (error) {
       heartbeatState.lastFailure = compactString(error.message, 400);
       heartbeatState.lastFailureAt = new Date().toISOString();
@@ -6518,20 +9087,17 @@ function initEvents() {
 
   elements.modeEdit.addEventListener('click', () => {
     if (!elements.knowledgeGraphView.classList.contains('hidden')) return;
-    elements.modeEdit.classList.add('active');
-    elements.modePreview.classList.remove('active');
-    elements.editorTextarea.classList.remove('hidden');
-    elements.editorPreview.classList.add('hidden');
+    state.viewMode = 'edit';
+    saveState();
+    applyViewMode();
     elements.editorTextarea.focus();
   });
 
   elements.modePreview.addEventListener('click', () => {
     if (!elements.knowledgeGraphView.classList.contains('hidden')) return;
-    elements.modePreview.classList.add('active');
-    elements.modeEdit.classList.remove('active');
-    elements.editorTextarea.classList.add('hidden');
-    elements.editorPreview.classList.remove('hidden');
-    updatePreview();
+    state.viewMode = 'preview';
+    saveState();
+    applyViewMode();
   });
 
   elements.btnBold.addEventListener('click', () => wrapSelection('**', '**'));
@@ -6552,6 +9118,20 @@ function initEvents() {
         e.preventDefault();
         wrapSelection('### ', '');
       }
+    }
+  });
+
+  elements.editorPreview.addEventListener('click', (e) => {
+    const badge = e.target.closest('.ref-badge');
+    if (badge) {
+      e.stopPropagation();
+      showRefPopover(badge);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (activePopover && !e.target.closest('.ref-popover') && !e.target.closest('.ref-badge')) {
+      closeActivePopover();
     }
   });
 

@@ -282,5 +282,9 @@ CREATE (source)-[:STORY_RELATION {
 }
 
 export default defineConfig({
-  plugins: [novelInputWriterPlugin()]
+  plugins: [novelInputWriterPlugin()],
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: true
+  }
 });
