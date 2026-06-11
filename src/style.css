@@ -2050,7 +2050,12 @@ body.css-bg .modal textarea::placeholder {
   display: flex;
   flex-direction: column;
   flex: 1;
+  margin: 0 -12px;
   transition: all var(--transition-normal);
+}
+
+.novel-section.collapsed {
+  flex: none;
 }
 
 .novel-section.active {
@@ -2060,7 +2065,7 @@ body.css-bg .modal textarea::placeholder {
 }
 
 .novel-section-header {
-  padding: 10px 14px;
+  padding: 10px 26px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -2074,7 +2079,7 @@ body.css-bg .modal textarea::placeholder {
 
 .novel-section.active .novel-section-header {
   border-left: 3px solid var(--accent-color);
-  padding-left: 11px;
+  padding-left: 23px;
 }
 
 .novel-title-click {
@@ -2135,7 +2140,7 @@ body.css-bg .modal textarea::placeholder {
 }
 
 .novel-section-content {
-  padding: 4px 0 0 0;
+  padding: 4px 12px 0 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
