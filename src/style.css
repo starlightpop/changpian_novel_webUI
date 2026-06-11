@@ -376,6 +376,8 @@ body {
    ========================================================================== */
 .editor-container {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -479,6 +481,8 @@ body {
    ========================================================================== */
 .editor-workspace {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0 40px;
@@ -560,11 +564,17 @@ body {
 /* Editor Body Area */
 .editor-body {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   position: relative;
   overflow-y: auto;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
+}
+
+.editor-body.graph-active {
+  overflow: hidden;
 }
 
 #editor-textarea {
@@ -662,25 +672,33 @@ body {
 
 .knowledge-graph-view {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .graph-toolbar {
+  flex: 0 0 auto;
+  min-width: 0;
   padding: 0 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .graph-toolbar > div {
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 10px;
 }
 
 .graph-controls {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -726,9 +744,11 @@ body {
 }
 
 .character-graph-svg {
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-width: 0;
+  min-height: 0;
   cursor: grab;
 }
 
@@ -982,6 +1002,57 @@ body {
   color: var(--text-muted);
   font-size: 0.7rem;
   line-height: 1.55;
+}
+
+.reference-upload {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 9px;
+  border: 1px dashed rgba(96, 165, 250, 0.55);
+  border-radius: 7px;
+  background: rgba(30, 64, 175, 0.1);
+  cursor: default;
+}
+
+.reference-upload label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reference-upload label svg {
+  width: 14px;
+  height: 14px;
+}
+
+.reference-upload input {
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.reference-upload small {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.reference-upload.is-working {
+  border-color: #f59e0b;
+}
+
+.reference-upload.is-ready {
+  border-color: #10b981;
+}
+
+.reference-upload.is-error {
+  border-color: var(--danger-color);
 }
 
 .workflow-guide-note {
@@ -2208,3 +2279,238 @@ body {
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
+/* ==========================================================================
+   Authentication Styles
+   ========================================================================== */
+.auth-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top right, #1b2536 0%, #0f141c 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  background: rgba(22, 27, 38, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: authFadeIn 0.4s ease-out;
+}
+
+.auth-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+}
+
+.auth-header p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.auth-tab:hover {
+  color: var(--text-primary);
+}
+
+.auth-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#auth-form input {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+#auth-form input:focus {
+  border-color: var(--border-focus);
+}
+
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Multiple API Key Slot switching and quick selection styles */
+.task-api-switch-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.task-api-switch-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-api-switch-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.task-api-switch-btn.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.settings-slots-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.slot-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.slot-btn.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.btn-add-slot {
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-add-slot:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.slot-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slot-name-input {
+  flex: 1;
+}
+
+.btn-delete-slot {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-delete-slot:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: var(--danger-color);
+}
