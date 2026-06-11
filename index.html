@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>小说创作与设定协同系统</title>
+    <style>
+      html {
+        background: #0f141c;
+      }
+
+      body {
+        visibility: hidden;
+      }
+
+      html.ui-ready body {
+        visibility: visible;
+      }
+    </style>
     <!-- 引入高质感现代字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +37,35 @@
   </head>
   <body>
     <div id="app-background"></div>
-    <div id="app" class="app-container">
+    <!-- 登录注册面板 -->
+    <div id="auth-container" class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h2>小说创作与设定协同系统</h2>
+          <p>请登录或注册您的本地专属账号以开始创作</p>
+        </div>
+        
+        <div class="auth-tabs">
+          <button id="tab-login" class="auth-tab active">登录</button>
+          <button id="tab-register" class="auth-tab">注册</button>
+        </div>
+        
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="auth-username">用户名</label>
+            <input type="text" id="auth-username" required placeholder="包含字母、数字、下划线" autocomplete="username"/>
+          </div>
+          <div class="form-group">
+            <label for="auth-password">密码</label>
+            <input type="password" id="auth-password" required placeholder="长度至少 6 位" autocomplete="current-password"/>
+          </div>
+          <div id="auth-error" class="form-error hidden"></div>
+          <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-full">登录</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="app" class="app-container hidden">
       <!-- 左侧边栏：项目上下文与素材 -->
       <aside class="sidebar">
         <!-- 侧边栏页眉，动态显示当前活动小说名称 -->
@@ -69,6 +110,8 @@
             </div>
           </div>
           <div class="header-actions">
+            <span id="user-display-name" style="font-size: 0.85rem; color: var(--text-secondary); margin-right: 8px;"></span>
+            <button class="icon-btn" id="logout-btn" title="退出登录" style="margin-right: 8px;"><i data-lucide="log-out"></i></button>
             <button class="icon-btn" id="settings-btn" title="设置"><i data-lucide="settings"></i></button>
           </div>
         </header>
@@ -143,22 +186,30 @@
                 <li class="workflow-step" role="button" tabindex="0">
                   <strong>第一步：输入背景设定和简介</strong>
                   <p><code>背景设定：【女频，架空古代，玄幻，重生，无CP】，简介：【故事简介……】</code></p>
-                  <span>背景设定必填，必须明确“男频/女频”和“架空古代/古武都市/现代都市/末世/星际”等时代或世界类型；简介选填。</span>
+                  <span class="workflow-step-description">背景设定必填，必须明确“男频/女频”和“架空古代/古武都市/现代都市/末世/星际”等时代或世界类型；简介选填。也可先上传 TXT 原著，由 AI 拆解其人物、剧情、逻辑、伏笔、节奏和叙事技法，再以低相似度方式构建新书总纲。</span>
+                  <div class="reference-upload" data-no-step-fill>
+                    <label for="reference-novel-file">
+                      <i data-lucide="file-up"></i>
+                      <span>上传 TXT 原著参考</span>
+                    </label>
+                    <input type="file" id="reference-novel-file" accept=".txt,text/plain" multiple />
+                    <small id="reference-novel-status">尚未上传；不会受工作区名称《风暴使者手记》影响。</small>
+                  </div>
                 </li>
                 <li class="workflow-step" role="button" tabindex="0">
                   <strong>第二步：构建人物体系</strong>
                   <p><code>构建至少50个人物</code></p>
-                  <span>生成人物生平、身份、势力、性格、欲望、目标、利益、成长史、弧光、高光、命运和关系图。</span>
+                  <span class="workflow-step-description">生成人物生平、身份、势力、性格、欲望、目标、利益、成长史、弧光、高光、命运和关系图。</span>
                 </li>
                 <li class="workflow-step" role="button" tabindex="0">
                   <strong>第三步：构建章节细纲</strong>
                   <p><code>构建100章剧情细纲</code></p>
-                  <span>生成卷纲、章节梗概、人物行动、因果链、伏笔链、时空、多线群像、高潮低谷和章末钩子。</span>
+                  <span class="workflow-step-description">生成卷纲、章节梗概、人物行动、因果链、伏笔链、时空、多线群像、高潮低谷和章末钩子。</span>
                 </li>
                 <li class="workflow-step" role="button" tabindex="0">
                   <strong>第四步：执行全书终审</strong>
                   <p><code>全书终审并综合修改</code></p>
-                  <span>检查并修复人物、剧情、关系、因果、伏笔、节奏和时空问题，输出最终综合大纲与终审报告。</span>
+                  <span class="workflow-step-description">检查并修复人物、剧情、关系、因果、伏笔、节奏和时空问题，输出最终综合大纲与终审报告。</span>
                 </li>
               </ol>
               <div class="workflow-guide-note">每一步审核通过并写入左侧设定库后，再执行下一步。修改人物或章节后，需要重新执行第四步。</div>
@@ -171,6 +222,7 @@
               <i data-lucide="send"></i>
             </button>
           </div>
+          <div id="task-api-switch-container" class="task-api-switch-container"></div>
         </footer>
       </main>
     </div>
@@ -270,6 +322,7 @@
           </div>
         </div>
         <div class="modal-body outline-review-body">
+          <div id="outline-audit-report" class="character-audit-report hidden" style="margin-bottom: 14px;"></div>
           <div class="outline-summary">
             <span>作品定位</span>
             <p id="outline-review-summary"></p>
@@ -325,6 +378,12 @@
               <label for="new-novel-synopsis">作品简介 <span class="optional-mark">选填</span></label>
               <textarea id="new-novel-synopsis" rows="10" placeholder="粘贴作品简介、核心梗概或主要剧情。留空时，AI 将仅根据背景设定构建设定库。"></textarea>
             </div>
+            <div class="form-group">
+              <label for="new-novel-file">上传原著参考（可选 .txt）</label>
+              <input type="file" id="new-novel-file" accept=".txt" style="width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; color: var(--text-primary);" multiple />
+              <small id="new-novel-reference-status" style="cursor: pointer; color: var(--primary-color); text-decoration: underline; display: none; margin-top: 4px; font-weight: 500;"></small>
+              <p class="form-hint">系统会从全文不同位置抽取片段，分段拆解人物、剧情、因果、伏笔、节奏与世界规则；只保存抽象结构报告，不保存原著正文。新书采用低相似度技法迁移，禁止复制原著姓名、专有名词、句子与事件顺序，也不受工作区占位名称《风暴使者手记》影响。</p>
+            </div>
             <div id="new-novel-error" class="form-error hidden"></div>
             <div id="new-novel-progress" class="ai-analysis-progress hidden">
               <i data-lucide="loader-2" class="animate-spin"></i>
@@ -361,15 +420,29 @@
             <div class="form-grid-two">
               <div class="form-group"><label>姓名</label><input id="graph-character-name" required /></div>
               <div class="form-group"><label>身份</label><input id="graph-character-identity" required /></div>
+              <div class="form-group"><label>公开身份</label><input id="graph-character-public-identity" required /></div>
+              <div class="form-group"><label>隐藏身份（用顿号分隔）</label><input id="graph-character-hidden-identities" /></div>
+              <div class="form-group"><label>身份揭露</label><input id="graph-character-identity-reveal-stage" required /></div>
               <div class="form-group"><label>阵营</label><input id="graph-character-faction" required /></div>
-              <div class="form-group"><label>性格</label><input id="graph-character-personality" required /></div>
+              <div class="form-group"><label>势力范围</label><input id="graph-character-faction-scope" required /></div>
+              <div class="form-group"><label>年龄与外貌</label><input id="graph-character-age-appearance" required /></div>
             </div>
+            <div class="form-group"><label>剧情功能</label><textarea id="graph-character-story-function" rows="2" required></textarea></div>
+            <div class="form-group"><label>性格</label><textarea id="graph-character-personality" rows="2" required></textarea></div>
+            <div class="form-group"><label>主要经历</label><textarea id="graph-character-life-history" rows="3" required></textarea></div>
+            <div class="form-group"><label>成长史</label><textarea id="graph-character-growth-history" rows="3" required></textarea></div>
             <div class="form-group"><label>欲望</label><textarea id="graph-character-desire" rows="2" required></textarea></div>
             <div class="form-group"><label>目标</label><textarea id="graph-character-goal" rows="2" required></textarea></div>
             <div class="form-group"><label>利益与底线</label><textarea id="graph-character-interests" rows="2" required></textarea></div>
+            <div class="form-group"><label>主观能动性</label><textarea id="graph-character-agency" rows="2" required></textarea></div>
+            <div class="form-group"><label>能力与资源</label><textarea id="graph-character-ability" rows="2" required></textarea></div>
+            <div class="form-group"><label>缺陷与代价</label><textarea id="graph-character-weakness" rows="2" required></textarea></div>
             <div class="form-group"><label>人物弧光</label><textarea id="graph-character-arc" rows="3" required></textarea></div>
             <div class="form-group"><label>高光时刻</label><textarea id="graph-character-highlight" rows="3" required></textarea></div>
             <div class="form-group"><label>最终结局</label><textarea id="graph-character-fate" rows="3" required></textarea></div>
+            <div class="form-group"><label>总纲对应情节</label><textarea id="graph-character-plot-anchor" rows="2" required></textarea></div>
+            <div class="form-group"><label>设定依据</label><textarea id="graph-character-setting-basis" rows="2" required></textarea></div>
+            <div class="form-group"><label>伏笔与回收</label><textarea id="graph-character-foreshadow-link" rows="2" required></textarea></div>
             <div class="form-actions">
               <button type="button" class="btn btn-secondary graph-edit-cancel">取消</button>
               <button type="submit" class="btn btn-primary">保存并全局同步</button>
@@ -440,6 +513,16 @@
         </div>
         <div class="modal-body">
           <form id="settings-form">
+            <div class="form-group">
+              <label>配置卡槽 (Configuration Slots)</label>
+              <div id="settings-slots-container" class="settings-slots-container">
+                <!-- Dynamically populated -->
+              </div>
+              <div class="slot-edit-row">
+                <input type="text" id="slot-name-input" class="slot-name-input" placeholder="重命名当前配置槽..." style="box-sizing: border-box;" />
+                <button type="button" id="btn-delete-slot" class="btn-delete-slot">删除配置</button>
+              </div>
+            </div>
             <div class="form-group">
               <label for="api-url-input">API 接口地址 (Base URL)</label>
               <input type="text" id="api-url-input" placeholder="例如 https://generativelanguage.googleapis.com 或 https://api.openai.com/v1" style="width: 100%; box-sizing: border-box;" required />
@@ -514,6 +597,67 @@
           <div class="form-actions progress-actions">
             <button type="button" class="btn btn-primary hidden" id="btn-progress-action">查看并审核结果</button>
             <button type="button" class="btn btn-secondary hidden" id="btn-progress-close">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 原著参考文件管理与确认弹窗 -->
+    <div class="modal-backdrop hidden" id="reference-manager-modal">
+      <div class="modal modal-wide" style="max-width: 600px;">
+        <div class="modal-header">
+          <div>
+            <h3>确认拆解分析原著参考</h3>
+            <p class="modal-subtitle">已选择以下原著文件，您可以进行增加、删除或查看，确认后开始 AI 拆解分析。</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div id="reference-file-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-app); padding: 8px;">
+            <!-- 动态渲染文件列表 -->
+          </div>
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button type="button" class="btn btn-secondary" id="btn-manager-add-file" style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="plus"></i> 添加更多文件
+            </button>
+            <input type="file" id="manager-add-file-input" accept=".txt,text/plain" multiple style="display: none;" />
+          </div>
+          <div class="form-actions" style="justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-reference-manager">取消</button>
+            <button type="button" class="btn btn-primary" id="btn-confirm-reference-analysis" style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="play"></i> 开始拆解分析 (<span id="reference-confirm-count">0</span>)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 原著参考拆解与分析进度弹窗 -->
+    <div class="modal-backdrop hidden" id="reference-progress-modal">
+      <div class="modal modal-wide" style="max-width: 600px;">
+        <div class="modal-header">
+          <div>
+            <h3>原著参考拆解与技法分析</h3>
+            <p class="modal-subtitle">正在分段提取多个原著结构、人物原型、因果链与伏笔特征，并生成原创仿写设定。</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="progress-bar-container" style="background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+            <div id="reference-progress-bar" style="background: var(--primary-color); width: 0%; height: 100%; transition: width 0.2s ease;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+            <span id="reference-progress-status">正在准备分析...</span>
+            <span id="reference-progress-percentage">0%</span>
+          </div>
+          <div class="agent-log-container" style="margin-top: 10px;">
+            <div class="agent-log-header" style="background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 8px 12px; font-weight: 500;">
+              <span>拆解进度日志</span>
+            </div>
+            <div class="agent-log-content" id="reference-log-content" style="max-height: 200px; overflow-y: auto; padding: 12px; font-family: monospace; font-size: 0.85rem; line-height: 1.5; background: var(--bg-app); border-radius: 0 0 8px 8px;">
+              <div class="log-line system">初始化上传通道...</div>
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 20px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" id="btn-close-reference-progress" disabled>请稍候...</button>
           </div>
         </div>
       </div>
