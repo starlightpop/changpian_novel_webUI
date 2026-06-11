@@ -1,3 +1,4 @@
+import './style.css';
 import { marked } from 'marked';
 
 // 配置 marked 以支持安全渲染和换行
@@ -235,6 +236,7 @@ const BG_IMAGES = [
   { id: 'dark-starry',       name: '星空夜', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0b0e1a, #161b2e)' },
   { id: 'none',               name: '默认渐变', group: '系统',     type: 'light',  value: '' }
 ];
+
 function syncActiveApiKeyFromSlots() {
   if (!state.apiKeys || !Array.isArray(state.apiKeys) || state.apiKeys.length === 0) {
     state.apiKeys = [
@@ -266,6 +268,7 @@ let state = {
   apiKey: localStorage.getItem('novel_api_key') || '',
   apiModel: localStorage.getItem('novel_api_model') || 'gemini-2.0-flash',
   apiUrl: localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com',
+  viewMode: localStorage.getItem('novel_view_mode') || 'edit',
   bgImage: localStorage.getItem('novel_bg_image') || 'solid-warm-white',
   apiKeys: safeJsonParse(localStorage.getItem('novel_api_keys'), [], 'novel_api_keys'),
   activeApiKeyId: localStorage.getItem('novel_active_api_key_id') || ''
@@ -284,9 +287,6 @@ let collapsedNovels = safeJsonParse(
 if (!Array.isArray(collapsedNovels)) {
   collapsedNovels = state.novels.map(n => n.id).filter(id => id !== state.activeNovelId);
 }
-// 确保活动小说始终展开
-const activeIdx = collapsedNovels.indexOf(state.activeNovelId);
-if (activeIdx > -1) collapsedNovels.splice(activeIdx, 1);
 
 let heartbeatState = safeJsonParse(localStorage.getItem('agent_heartbeat_state'), {}, 'agent_heartbeat_state');
 let novelInfoModalOpenedFrom = null;
@@ -458,15 +458,35 @@ async function syncUserDataToServer() {
 }
 
 function saveState() {
-  localStorage.setItem('multi_novels', JSON.stringify(state.novels));
-  localStorage.setItem('multi_active_novel_id', state.activeNovelId);
-  localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
-  localStorage.setItem('novel_api_key', state.apiKey);
-  localStorage.setItem('novel_api_model', state.apiModel);
-  localStorage.setItem('novel_api_url', state.apiUrl);
-  localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
-  localStorage.setItem('novel_bg_image', state.bgImage);
+  const uname = localStorage.getItem('novel_username');
+  if (uname) {
+    localStorage.setItem(`multi_novels_${uname}`, JSON.stringify(state.novels));
+    localStorage.setItem(`multi_active_novel_id_${uname}`, state.activeNovelId);
+    localStorage.setItem(`collapsed_novels_${uname}`, JSON.stringify(collapsedNovels));
+    localStorage.setItem(`novel_api_key_${uname}`, state.apiKey);
+    localStorage.setItem(`novel_api_model_${uname}`, state.apiModel);
+    localStorage.setItem(`novel_api_url_${uname}`, state.apiUrl);
+    localStorage.setItem(`novel_view_mode_${uname}`, state.viewMode || 'edit');
+    localStorage.setItem(`novel_bg_image_${uname}`, state.bgImage);
+    localStorage.setItem(`novel_api_keys_${uname}`, JSON.stringify(state.apiKeys));
+    localStorage.setItem(`novel_active_api_key_id_${uname}`, state.activeApiKeyId);
+  } else {
+    localStorage.setItem('multi_novels', JSON.stringify(state.novels));
+    localStorage.setItem('multi_active_novel_id', state.activeNovelId);
+    localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
+    localStorage.setItem('novel_api_key', state.apiKey);
+    localStorage.setItem('novel_api_model', state.apiModel);
+    localStorage.setItem('novel_api_url', state.apiUrl);
+    localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
+    localStorage.setItem('novel_bg_image', state.bgImage);
+    localStorage.setItem('novel_api_keys', JSON.stringify(state.apiKeys));
+    localStorage.setItem('novel_active_api_key_id', state.activeApiKeyId);
+  }
+
   persistStateToDatabase();
+
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(syncUserDataToServer, 2000);
 }
 
 async function persistStateToDatabase() {
@@ -479,7 +499,8 @@ async function persistStateToDatabase() {
       apiModel: state.apiModel,
       apiUrl: state.apiUrl,
       viewMode: state.viewMode || 'edit',
-      heartbeatState: heartbeatState
+      heartbeatState: heartbeatState,
+      bgImage: state.bgImage
     });
     await fetch('/api/save-state', {
       method: 'POST',
@@ -489,31 +510,6 @@ async function persistStateToDatabase() {
   } catch (e) {
     // SQLite 不可用时静默降级
   }
- const uname = localStorage.getItem('novel_username');
-  if (uname) {
-    localStorage.setItem(`multi_novels_${uname}`, JSON.stringify(state.novels));
-    localStorage.setItem(`multi_active_novel_id_${uname}`, state.activeNovelId);
-    localStorage.setItem(`collapsed_novels_${uname}`, JSON.stringify(collapsedNovels));
-    localStorage.setItem(`novel_api_key_${uname}`, state.apiKey);
-    localStorage.setItem(`novel_api_model_${uname}`, state.apiModel);
-    localStorage.setItem(`novel_api_url_${uname}`, state.apiUrl);
-    localStorage.setItem(`novel_view_mode_${uname}`, state.viewMode || 'edit');
-    localStorage.setItem(`novel_api_keys_${uname}`, JSON.stringify(state.apiKeys));
-    localStorage.setItem(`novel_active_api_key_id_${uname}`, state.activeApiKeyId);
-  } else {
-    localStorage.setItem('multi_novels', JSON.stringify(state.novels));
-    localStorage.setItem('multi_active_novel_id', state.activeNovelId);
-    localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
-    localStorage.setItem('novel_api_key', state.apiKey);
-    localStorage.setItem('novel_api_model', state.apiModel);
-    localStorage.setItem('novel_api_url', state.apiUrl);
-    localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
-    localStorage.setItem('novel_api_keys', JSON.stringify(state.apiKeys));
-    localStorage.setItem('novel_active_api_key_id', state.activeApiKeyId);
-  }
-
-  if (syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(syncUserDataToServer, 2000);
 }
 
 function applyViewMode() {
@@ -2834,11 +2830,70 @@ function renderTaskApiSwitch() {
   lucide.createIcons();
 }
 
+/* ==========================================================================
+   Background Management
+   ========================================================================== */
+function applyBackground() {
+  const bgEl = document.getElementById('app-background');
+  if (bgEl) { bgEl.style.display = 'none'; }
+  const bg = BG_IMAGES.find(b => b.id === state.bgImage);
+  const active = bg && bg.id !== 'none';
+  document.body.classList.toggle('css-bg', active && bg.type === 'light');
+  document.body.classList.toggle('dark-bg', active && bg.type === 'dark');
+  if (active && (bg.type === 'light' || bg.type === 'dark')) {
+    document.body.style.backgroundImage = bg.value;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    try { localStorage.setItem('novel_bg_type', bg.type); localStorage.setItem('novel_bg_css', bg.value); } catch(e){}
+  } else {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    try { localStorage.setItem('novel_bg_type', ''); localStorage.setItem('novel_bg_css', ''); } catch(e){}
+  }
+}
+
+function renderBgSelector() {
+  const container = document.getElementById('bg-selector');
+  if (!container) return;
+  container.innerHTML = '';
+  const groups = {};
+  BG_IMAGES.forEach(bg => {
+    if (!groups[bg.group]) groups[bg.group] = [];
+    groups[bg.group].push(bg);
+  });
+  
+  for (const [groupName, bgs] of Object.entries(groups)) {
+    const groupTitle = document.createElement('div');
+    groupTitle.style.width = '100%';
+    groupTitle.style.fontSize = '0.75rem';
+    groupTitle.style.color = 'var(--text-secondary)';
+    groupTitle.style.margin = '10px 0 5px 0';
+    groupTitle.style.fontWeight = '500';
+    groupTitle.textContent = groupName;
+    container.appendChild(groupTitle);
+    
+    bgs.forEach(bg => {
+      const opt = document.createElement('div');
+      opt.className = `bg-option ${state.bgImage === bg.id ? 'selected' : ''}`;
+      opt.title = bg.name;
+      opt.style.background = bg.value || 'var(--bg-main)';
+      opt.innerHTML = `<div class="bg-check"><i data-lucide="check" style="width: 10px; height: 10px;"></i></div>`;
+      opt.addEventListener('click', () => {
+        state.bgImage = bg.id;
+        document.querySelectorAll('.bg-option').forEach(el => el.classList.remove('selected'));
+        opt.classList.add('selected');
+        applyBackground();
+      });
+      container.appendChild(opt);
+    });
+  }
+  lucide.createIcons();
+}
+
 function openSettingsModal() {
-  elements.modelInput.value = state.apiModel || 'gemini-2.0-flash';
-  elements.apiUrlInput.value = state.apiUrl || 'https://generativelanguage.googleapis.com';
+  elements.settingsModal.classList.remove('hidden');
   syncActiveApiKeyFromSlots();
-  renderBgSelector();
   
   const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId) || state.apiKeys[0];
   elements.apiKeyInput.value = activeSlot.apiKey || '';
@@ -9681,66 +9736,6 @@ function reviewPlotSystem(result, mode = 'plot') {
 }
 
 /* ==========================================================================
-   Background Management
-   ========================================================================== */
-function applyBackground() {
-  const bgEl = document.getElementById('app-background');
-  if (bgEl) { bgEl.style.display = 'none'; }
-  const bg = BG_IMAGES.find(b => b.id === state.bgImage);
-  const active = bg && bg.id !== 'none';
-  document.body.classList.toggle('css-bg', active && bg.type === 'light');
-  document.body.classList.toggle('dark-bg', active && bg.type === 'dark');
-  if (active && (bg.type === 'light' || bg.type === 'dark')) {
-    document.body.style.backgroundImage = bg.value;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    // 缓存到 localStorage 供防黑闪脚本预读
-    try { localStorage.setItem('novel_bg_type', bg.type); localStorage.setItem('novel_bg_css', bg.value); } catch(e){}
-  } else {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    try { localStorage.setItem('novel_bg_type', ''); localStorage.setItem('novel_bg_css', ''); } catch(e){}
-  }
-}
-
-function renderBgSelector() {
-  const container = document.getElementById('bg-selector');
-  if (!container) return;
-  const groups = {};
-  BG_IMAGES.forEach(bg => {
-    if (!groups[bg.group]) groups[bg.group] = [];
-    groups[bg.group].push(bg);
-  });
-  let html = '';
-  for (const [groupName, items] of Object.entries(groups)) {
-    html += `<div style="width:100%;font-size:0.75rem;color:var(--text-secondary);margin-top:8px;margin-bottom:4px;font-weight:600;">${groupName}</div>`;
-    html += items.map(bg => {
-      const sel = state.bgImage === bg.id ? ' selected' : '';
-      let preview;
-      if (bg.type === 'light' || bg.type === 'dark') {
-        preview = bg.id === 'none'
-          ? '<div style="width:100%;height:100%;background:radial-gradient(circle at top right, #1b2536, #0f141c); border:1px solid rgba(255,255,255,0.15);"></div>'
-          : `<div style="width:100%;height:100%;background:${bg.value};"></div>`;
-      } else {
-        preview = `<img src="${bg.src}" alt="${bg.name}">`;
-      }
-      return `<div class="bg-option${sel}" data-bg-id="${bg.id}" title="${bg.name}">${preview}<span class="bg-check">✓</span></div>`;
-    }).join('');
-  }
-  container.innerHTML = html;
-  container.querySelectorAll('.bg-option').forEach(el => {
-    el.addEventListener('click', () => {
-      const bgId = el.dataset.bgId;
-      state.bgImage = bgId;
-      localStorage.setItem('novel_bg_image', bgId);
-      applyBackground();
-      renderBgSelector();
-    });
-  });
-}
-
-/* ==========================================================================
    Event Listeners Setup
    ========================================================================== */
 function initEvents() {
@@ -11005,38 +11000,6 @@ function initEvents() {
 /* ==========================================================================
    Initialization Launcher
    ========================================================================== */
-async function restoreFromDatabase() {
-  try {
-    const res = await fetch('/api/load-state');
-    const data = await res.json();
-    if (!res.ok || !data.state || !Array.isArray(data.state.novels) || data.state.novels.length === 0) return;
-    const s = data.state;
-    const localNovels = safeJsonParse(localStorage.getItem('multi_novels'), []);
-    if (localNovels.length === 0) {
-      localStorage.setItem('multi_novels', JSON.stringify(s.novels));
-      state.novels = s.novels;
-    }
-    if (s.activeNovelId) {
-      localStorage.setItem('multi_active_novel_id', s.activeNovelId);
-      state.activeNovelId = s.activeNovelId;
-    }
-    if (s.collapsedNovels) {
-      localStorage.setItem('collapsed_novels', JSON.stringify(s.collapsedNovels));
-      collapsedNovels = s.collapsedNovels;
-    }
-    if (s.apiKey) localStorage.setItem('novel_api_key', s.apiKey);
-    if (s.apiModel) localStorage.setItem('novel_api_model', s.apiModel);
-    if (s.apiUrl) localStorage.setItem('novel_api_url', s.apiUrl);
-    if (s.viewMode) localStorage.setItem('novel_view_mode', s.viewMode);
-    if (s.heartbeatState) {
-      localStorage.setItem('agent_heartbeat_state', JSON.stringify(s.heartbeatState));
-      heartbeatState = s.heartbeatState;
-    }
-  } catch (e) {
-    // 首次运行或服务重启时静默降级
-  }
-}
-
 async function loadUserDataAndLaunch(username, token) {
   const userDisplayName = document.getElementById('user-display-name');
   if (userDisplayName) {
@@ -11051,6 +11014,7 @@ async function loadUserDataAndLaunch(username, token) {
     state.apiModel = localStorage.getItem(`novel_api_model_${uname}`) || 'gemini-2.0-flash';
     state.apiUrl = localStorage.getItem(`novel_api_url_${uname}`) || 'https://generativelanguage.googleapis.com';
     state.viewMode = localStorage.getItem(`novel_view_mode_${uname}`) || 'edit';
+    state.bgImage = localStorage.getItem(`novel_bg_image_${uname}`) || 'solid-warm-white';
     heartbeatState = safeJsonParse(localStorage.getItem(`agent_heartbeat_state_${uname}`), {}, `agent_heartbeat_state_${uname}`);
     state.apiKeys = safeJsonParse(localStorage.getItem(`novel_api_keys_${uname}`), [], `novel_api_keys_${uname}`);
     state.activeApiKeyId = localStorage.getItem(`novel_active_api_key_id_${uname}`) || '';
@@ -11070,6 +11034,7 @@ async function loadUserDataAndLaunch(username, token) {
         state.apiModel = data.apiModel || 'gemini-2.0-flash';
         state.apiUrl = data.apiUrl || 'https://generativelanguage.googleapis.com';
         state.viewMode = data.viewMode || 'edit';
+        state.bgImage = data.bgImage || 'solid-warm-white';
         state.apiKeys = data.apiKeys || [];
         state.activeApiKeyId = data.activeApiKeyId || '';
         syncActiveApiKeyFromSlots();
@@ -11090,6 +11055,7 @@ async function loadUserDataAndLaunch(username, token) {
             state.apiModel = localStorage.getItem('novel_api_model') || 'gemini-2.0-flash';
             state.apiUrl = localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com';
             state.viewMode = localStorage.getItem('novel_view_mode') || 'edit';
+            state.bgImage = localStorage.getItem('novel_bg_image') || 'solid-warm-white';
             state.apiKeys = safeJsonParse(localStorage.getItem('novel_api_keys'), []);
             state.activeApiKeyId = localStorage.getItem('novel_active_api_key_id') || '';
             syncActiveApiKeyFromSlots();
@@ -11177,8 +11143,8 @@ async function loadUserDataAndLaunch(username, token) {
   const activeNovel = getActiveNovel();
   renderChapters();
   renderNovels();
-  applyBackground();
   renderTaskApiSwitch();
+  applyBackground();
   
   if (activeNovel) {
     switchEditorTarget(activeNovel.activeTarget.type, activeNovel.activeTarget.id);

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import Database from 'better-sqlite3';
 import crypto from 'node:crypto';
 
 const secretPath = path.resolve(process.cwd(), 'data', 'session-secret.key');
@@ -136,7 +137,81 @@ function formatTimestamp(date) {
 }
 
 function novelInputWriterPlugin() {
+  let db = null;
+
+  function initDatabase() {
+    const dir = path.resolve(process.cwd(), 'data');
+    mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, 'app.db');
+    db = new Database(filePath, { fileMustExist: false });
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
+    db.exec(`CREATE TABLE IF NOT EXISTS app_state (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+  }
+
+  function sqliteSaveState(payload) {
+    if (!db) return;
+    const value = JSON.stringify(payload);
+    const stmt = db.prepare(`INSERT OR REPLACE INTO app_state (key, value, updated_at) VALUES (?, ?, datetime('now'))`);
+    stmt.run('novel_state', value);
+  }
+
+  function sqliteLoadState() {
+    if (!db) return null;
+    const row = db.prepare('SELECT value FROM app_state WHERE key = ?').get('novel_state');
+    return row ? JSON.parse(row.value) : null;
+  }
+
   const registerMiddleware = server => {
+    initDatabase();
+
+    server.middlewares.use('/api/save-state', (req, res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+      if (req.method !== 'POST') { res.statusCode = 405; res.end(JSON.stringify({ error: '只支持 POST' })); return; }
+
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body);
+          sqliteSaveState(payload);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: error.message }));
+        }
+      });
+    });
+
+    server.middlewares.use('/api/load-state', (req, res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+      if (req.method !== 'GET') { res.statusCode = 405; res.end(JSON.stringify({ error: '只支持 GET' })); return; }
+
+      try {
+        const state = sqliteLoadState();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ state }));
+      } catch (error) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: error.message }));
+      }
+    });
+
     // ----------------------------------------------------
     // AUTHENTICATION MIDDLEWARES
     // ----------------------------------------------------
@@ -723,6 +798,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
-    allowedHosts: true
+    allowedHosts: true,
+    fs: { strict: false }
   }
 });

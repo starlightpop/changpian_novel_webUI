@@ -2050,7 +2050,12 @@ body.css-bg .modal textarea::placeholder {
   display: flex;
   flex-direction: column;
   flex: 1;
+  margin: 0 -12px;
   transition: all var(--transition-normal);
+}
+
+.novel-section.collapsed {
+  flex: none;
 }
 
 .novel-section.active {
@@ -2060,7 +2065,7 @@ body.css-bg .modal textarea::placeholder {
 }
 
 .novel-section-header {
-  padding: 10px 14px;
+  padding: 10px 26px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -2074,7 +2079,7 @@ body.css-bg .modal textarea::placeholder {
 
 .novel-section.active .novel-section-header {
   border-left: 3px solid var(--accent-color);
-  padding-left: 11px;
+  padding-left: 23px;
 }
 
 .novel-title-click {
@@ -2135,7 +2140,7 @@ body.css-bg .modal textarea::placeholder {
 }
 
 .novel-section-content {
-  padding: 4px 0 0 0;
+  padding: 4px 12px 0 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2809,3 +2814,238 @@ body.dark-bg .agent-task-container {
   display: flex;
 }
 
+/* ==========================================================================
+   Authentication Styles
+   ========================================================================== */
+.auth-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top right, #1b2536 0%, #0f141c 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  background: rgba(22, 27, 38, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: authFadeIn 0.4s ease-out;
+}
+
+.auth-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+}
+
+.auth-header p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.auth-tab:hover {
+  color: var(--text-primary);
+}
+
+.auth-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.btn-full {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#auth-form input {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+#auth-form input:focus {
+  border-color: var(--border-focus);
+}
+
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Multiple API Key Slot switching and quick selection styles */
+.task-api-switch-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.task-api-switch-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-api-switch-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.task-api-switch-btn.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.settings-slots-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.slot-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.slot-btn.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.btn-add-slot {
+  border: 1px dashed var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-add-slot:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.slot-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slot-name-input {
+  flex: 1;
+}
+
+.btn-delete-slot {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-delete-slot:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: var(--danger-color);
+}
