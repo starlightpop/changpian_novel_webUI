@@ -200,13 +200,47 @@ const migratedDefaultNovel = {
   categoryOrder: cloneDefault(DEFAULT_CATEGORY_ORDER)
 };
 
+/* ==========================================================================
+   Background Images
+   ========================================================================== */
+const BG_IMAGES = [
+  // --- 纯色柔和（清爽低饱和） ---
+  { id: 'solid-warm-white',  name: '晨光白', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #f8f5f0, #fefefe)' },
+  { id: 'solid-cream',       name: '奶油色', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fef9e7, #fdf4d8)' },
+  { id: 'solid-sky-blue',    name: '天空蓝', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #e8f4fd, #f0f7fc)' },
+  { id: 'solid-mint',        name: '薄荷绿', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #eaf6ef, #f2f9f4)' },
+  { id: 'solid-sakura',      name: '樱花粉', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fdf0f3, #fef6f7)' },
+  { id: 'solid-apricot',     name: '杏色',   group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fef5ec, #fdf0e0)' },
+  { id: 'solid-lavender',    name: '薰衣草', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #f2eff9, #f8f5fc)' },
+  { id: 'solid-sage',        name: '鼠尾草', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #eef4eb, #f4f8f2)' },
+  { id: 'solid-peach',       name: '蜜桃色', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fef4ef, #fdf0e8)' },
+  { id: 'solid-moon',        name: '月白',   group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #f5f6fa, #fafbfd)' },
+  { id: 'solid-ivory',       name: '象牙白', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fdfaf3, #fefdfb)' },
+  { id: 'solid-sand',        name: '暖沙色', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #faf5ee, #fcf8f4)' },
+  { id: 'solid-mauve',       name: '浅藕荷', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #f6f2f8, #fcf9fd)' },
+  { id: 'solid-eggshell',    name: '蛋壳色', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #f9f8f2, #fdfdfc)' },
+  { id: 'solid-gold',        name: '晨曦金', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #fef9ee, #fefbf5)' },
+  { id: 'solid-sea',         name: '浅海蓝', group: '纯色柔和', type: 'light', value: 'linear-gradient(135deg, #eff6f8, #f6fafb)' },
+  // --- 深色夜间（深沉不丑陋） ---
+  { id: 'dark-navy',         name: '深海蓝', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0c1629, #162132)' },
+  { id: 'dark-charcoal',     name: '暗炭灰', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #14181f, #1c212a)' },
+  { id: 'dark-midnight',     name: '子夜紫', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #14101e, #1e172a)' },
+  { id: 'dark-forest',       name: '森林暗', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0f1a14, #17241c)' },
+  { id: 'dark-warm',         name: '暖棕夜', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #1a1410, #261e17)' },
+  { id: 'dark-slate',        name: '石板灰', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #141b24, #1e2631)' },
+  { id: 'dark-ink',          name: '墨玉黑', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0f0f12, #1a1a1f)' },
+  { id: 'dark-starry',       name: '星空夜', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0b0e1a, #161b2e)' },
+  { id: 'none',               name: '默认渐变', group: '系统',     type: 'light',  value: '' }
+];
+
 let state = {
   novels: safeJsonParse(localStorage.getItem('multi_novels'), [migratedDefaultNovel], 'multi_novels'),
   activeNovelId: localStorage.getItem('multi_active_novel_id') || 'novel-default',
   apiKey: localStorage.getItem('novel_api_key') || '',
   apiModel: localStorage.getItem('novel_api_model') || 'gemini-2.0-flash',
   apiUrl: localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com',
-  viewMode: localStorage.getItem('novel_view_mode') || 'edit'
+  viewMode: localStorage.getItem('novel_view_mode') || 'edit',
+  bgImage: localStorage.getItem('novel_bg_image') || 'solid-warm-white'
 };
 if (!Array.isArray(state.novels) || !state.novels.length) {
   state.novels = [migratedDefaultNovel];
@@ -221,6 +255,9 @@ let collapsedNovels = safeJsonParse(
 if (!Array.isArray(collapsedNovels)) {
   collapsedNovels = state.novels.map(n => n.id).filter(id => id !== state.activeNovelId);
 }
+// 确保活动小说始终展开
+const activeIdx = collapsedNovels.indexOf(state.activeNovelId);
+if (activeIdx > -1) collapsedNovels.splice(activeIdx, 1);
 
 let heartbeatState = safeJsonParse(localStorage.getItem('agent_heartbeat_state'), {}, 'agent_heartbeat_state');
 
@@ -2227,6 +2264,7 @@ function openSettingsModal() {
   elements.apiKeyInput.value = state.apiKey || '';
   elements.modelInput.value = state.apiModel || 'gemini-2.0-flash';
   elements.apiUrlInput.value = state.apiUrl || 'https://generativelanguage.googleapis.com';
+  renderBgSelector();
 }
 
 function closeSettingsModal() {
@@ -8271,6 +8309,66 @@ function reviewPlotSystem(result, mode = 'plot') {
 }
 
 /* ==========================================================================
+   Background Management
+   ========================================================================== */
+function applyBackground() {
+  const bgEl = document.getElementById('app-background');
+  if (bgEl) { bgEl.style.display = 'none'; }
+  const bg = BG_IMAGES.find(b => b.id === state.bgImage);
+  const active = bg && bg.id !== 'none';
+  document.body.classList.toggle('css-bg', active && bg.type === 'light');
+  document.body.classList.toggle('dark-bg', active && bg.type === 'dark');
+  if (active && (bg.type === 'light' || bg.type === 'dark')) {
+    document.body.style.backgroundImage = bg.value;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    // 缓存到 localStorage 供防黑闪脚本预读
+    try { localStorage.setItem('novel_bg_type', bg.type); localStorage.setItem('novel_bg_css', bg.value); } catch(e){}
+  } else {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    try { localStorage.setItem('novel_bg_type', ''); localStorage.setItem('novel_bg_css', ''); } catch(e){}
+  }
+}
+
+function renderBgSelector() {
+  const container = document.getElementById('bg-selector');
+  if (!container) return;
+  const groups = {};
+  BG_IMAGES.forEach(bg => {
+    if (!groups[bg.group]) groups[bg.group] = [];
+    groups[bg.group].push(bg);
+  });
+  let html = '';
+  for (const [groupName, items] of Object.entries(groups)) {
+    html += `<div style="width:100%;font-size:0.75rem;color:var(--text-secondary);margin-top:8px;margin-bottom:4px;font-weight:600;">${groupName}</div>`;
+    html += items.map(bg => {
+      const sel = state.bgImage === bg.id ? ' selected' : '';
+      let preview;
+      if (bg.type === 'light' || bg.type === 'dark') {
+        preview = bg.id === 'none'
+          ? '<div style="width:100%;height:100%;background:radial-gradient(circle at top right, #1b2536, #0f141c); border:1px solid rgba(255,255,255,0.15);"></div>'
+          : `<div style="width:100%;height:100%;background:${bg.value};"></div>`;
+      } else {
+        preview = `<img src="${bg.src}" alt="${bg.name}">`;
+      }
+      return `<div class="bg-option${sel}" data-bg-id="${bg.id}" title="${bg.name}">${preview}<span class="bg-check">✓</span></div>`;
+    }).join('');
+  }
+  container.innerHTML = html;
+  container.querySelectorAll('.bg-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const bgId = el.dataset.bgId;
+      state.bgImage = bgId;
+      localStorage.setItem('novel_bg_image', bgId);
+      applyBackground();
+      renderBgSelector();
+    });
+  });
+}
+
+/* ==========================================================================
    Event Listeners Setup
    ========================================================================== */
 function initEvents() {
@@ -9202,6 +9300,7 @@ async function init() {
   
   renderChapters();
   renderNovels();
+  applyBackground();
   
   if (activeNovel) {
     switchEditorTarget(activeNovel.activeTarget.type, activeNovel.activeTarget.id);

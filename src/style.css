@@ -80,6 +80,450 @@ body {
 }
 
 /* ==========================================================================
+   Global Background
+   ========================================================================== */
+#app-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0.12;
+}
+
+/* ============ body.css-bg: 亮色背景模式全局适配 ============ */
+
+body.css-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+body.css-bg #app-background { display: none; }
+
+/* --- 侧边栏完整亮色覆写（逐元素对齐原始暗色类） --- */
+body.css-bg .sidebar {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px);
+  border-right-color: rgba(0, 0, 0, 0.05);
+  color: #2d3748;
+}
+
+body.css-bg .sidebar-header,
+body.css-bg .sidebar-content,
+body.css-bg .sidebar-top-actions,
+body.css-bg .character-list-toolbar { background: transparent; color: #2d3748; }
+body.css-bg .sidebar-header { border-bottom-color: rgba(0,0,0,0.04); }
+body.css-bg .sidebar-header h2,
+body.css-bg #active-novel-name { color: #2d3748; }
+body.css-bg .sidebar-top-actions { border-bottom-color: rgba(0,0,0,0.04) !important; }
+body.css-bg .sidebar-top-actions span { color: #4a5568; }
+
+/* novel-section （卡片框已移除） */
+body.css-bg .novel-section,
+body.css-bg .novel-section.active {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.css-bg .novel-section-header {
+  background: transparent !important;
+  border-bottom: none !important;
+  color: #2d3748;
+}
+
+body.css-bg .novel-title-click {
+  color: #2d3748 !important;
+}
+body.css-bg .novel-title-click:hover {
+  color: #3b82f6 !important;
+}
+
+body.css-bg .novel-section-content {
+  background: transparent;
+}
+
+body.css-bg .novel-ctrl-btn {
+  color: #a0aec0 !important;
+}
+body.css-bg .novel-ctrl-btn:hover {
+  color: #2d3748 !important;
+  background-color: rgba(0,0,0,0.06) !important;
+}
+
+/* group-header / group-title-click */
+body.css-bg .group-title-click {
+  color: #2d3748 !important;
+}
+body.css-bg .group-title-click:hover {
+  color: #3b82f6 !important;
+}
+
+body.css-bg .group-header { color: #2d3748; }
+
+/* add-btn */
+body.css-bg .add-btn {
+  color: #a0aec0 !important;
+}
+body.css-bg .add-btn:hover {
+  background-color: rgba(0,0,0,0.06) !important;
+  color: #2d3748 !important;
+}
+
+/* sub-group / asset */
+body.css-bg .sub-group-title {
+  color: #4a5568 !important;
+}
+body.css-bg .sub-group-title:hover {
+  color: #1a202c !important;
+}
+
+body.css-bg .asset-item {
+  color: #4a5568 !important;
+}
+body.css-bg .asset-item:hover {
+  background-color: rgba(0,0,0,0.04) !important;
+  color: #1a202c !important;
+}
+body.css-bg .asset-item.active {
+  background-color: rgba(59,130,246,0.1) !important;
+  color: #2563eb !important;
+  border-left-color: #3b82f6 !important;
+}
+
+body.css-bg .asset-action-btn {
+  color: #a0aec0 !important;
+}
+body.css-bg .asset-action-btn:hover {
+  color: #2d3748 !important;
+  background-color: rgba(0,0,0,0.06) !important;
+}
+
+body.css-bg .sub-group-ctrl-btn {
+  color: #a0aec0 !important;
+}
+body.css-bg .sub-group-ctrl-btn:hover {
+  color: #2d3748 !important;
+  background-color: rgba(0,0,0,0.06) !important;
+}
+
+/* character-list-toolbar */
+body.css-bg .character-list-toolbar input,
+body.css-bg .character-list-toolbar select {
+  background: rgba(255,255,255,0.3) !important;
+  color: #2d3748 !important;
+  border-color: rgba(0,0,0,0.06) !important;
+}
+body.css-bg .character-list-toolbar span {
+  color: #718096 !important;
+}
+
+/* --- 编辑器：极薄白色覆盖层，底色最大程度透出 --- */
+body.css-bg .editor-container {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+body.css-bg .editor-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.css-bg .editor-toolbar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.css-bg .divider {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* --- 编辑器文字：深色系 --- */
+body.css-bg #editor-textarea,
+body.css-bg .markdown-preview,
+body.css-bg .markdown-preview h1,
+body.css-bg .markdown-preview h2,
+body.css-bg .markdown-preview h3,
+body.css-bg .markdown-preview h4,
+body.css-bg .markdown-preview p,
+body.css-bg .markdown-preview li {
+  color: #2d3748;
+}
+
+body.css-bg #editor-textarea::placeholder {
+  color: #a0aec0;
+}
+
+body.css-bg .markdown-preview h2 {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body.css-bg .markdown-preview blockquote {
+  color: #4a5568;
+  border-left-color: rgba(0, 0, 0, 0.12);
+}
+
+body.css-bg .markdown-preview code,
+body.css-bg .markdown-preview pre {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: #2d3748;
+}
+
+body.css-bg .markdown-preview pre {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* --- 工具栏按钮 --- */
+body.css-bg .icon-btn,
+body.css-bg .tool-btn {
+  color: #4a5568;
+}
+
+body.css-bg .icon-btn:hover,
+body.css-bg .tool-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1a202c;
+}
+
+body.css-bg .icon-btn-text {
+  color: #4a5568;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.css-bg .icon-btn-text:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #1a202c;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* --- 章节下拉 --- */
+body.css-bg .chapter-dropdown {
+  color: #1a202c;
+}
+
+body.css-bg .chapter-dropdown option {
+  background-color: #fff;
+  color: #1a202c;
+}
+
+body.css-bg .active-asset-title {
+  color: #2d3748 !important;
+}
+
+/* --- 编辑/预览模式切换 --- */
+body.css-bg .mode-btn {
+  color: #718096;
+}
+
+body.css-bg .mode-btn.active {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #1a202c;
+}
+
+body.css-bg .mode-selector {
+  background-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* --- 底部 AI 任务区域：薄蒙层透底，跟随背景色 --- */
+body.css-bg .agent-task-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-top-color: rgba(0, 0, 0, 0.03);
+}
+
+body.css-bg .agent-task-input-wrapper {
+  background: transparent;
+}
+
+body.css-bg #agent-task-textarea,
+body.css-bg .agent-task-textarea {
+  background: rgba(255, 255, 255, 0.3);
+  color: #2d3748;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.css-bg #agent-task-textarea::placeholder,
+body.css-bg .agent-task-textarea::placeholder {
+  color: #a0aec0;
+}
+
+body.css-bg .agent-task-send-btn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+body.css-bg #agent-task-status span {
+  color: #4a5568;
+}
+
+body.css-bg .workflow-guide {
+  background: transparent;
+}
+
+body.css-bg .workflow-guide summary span {
+  color: #4a5568;
+}
+
+body.css-bg .workflow-guide summary span:first-child i {
+  color: #4a5568;
+}
+
+body.css-bg .workflow-guide-content {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+body.css-bg .workflow-step {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #2d3748;
+}
+
+body.css-bg .workflow-step strong {
+  color: #1a202c;
+}
+
+body.css-bg .workflow-step p,
+body.css-bg .workflow-step span {
+  color: #4a5568;
+}
+
+body.css-bg .workflow-step:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+body.css-bg .workflow-guide-content code {
+  background: rgba(0, 0, 0, 0.04);
+  color: #2d3748;
+}
+
+body.css-bg .workflow-guide-note {
+  color: #718096;
+}
+
+/* --- 知识图谱 --- */
+body.css-bg .graph-canvas-wrap {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.css-bg .graph-toolbar strong {
+  color: #1a202c;
+}
+
+body.css-bg .graph-toolbar span {
+  color: #718096;
+}
+
+body.css-bg .graph-node text {
+  fill: #2d3748;
+  stroke: rgba(255, 255, 255, 0.85);
+}
+
+body.css-bg .graph-edge {
+  stroke: rgba(0, 0, 0, 0.15);
+}
+
+body.css-bg .graph-edge.highlighted {
+  stroke: #3b82f6;
+}
+
+body.css-bg .graph-node-detail {
+  background: rgba(255, 255, 255, 0.9);
+  color: #2d3748;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.css-bg .graph-node-detail h3 {
+  color: #1a202c;
+}
+
+body.css-bg .graph-controls input,
+body.css-bg .graph-controls select {
+  background: rgba(255, 255, 255, 0.6);
+  color: #2d3748;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.css-bg .graph-controls input:focus,
+body.css-bg .graph-controls select:focus {
+  border-color: #3b82f6;
+}
+
+/* --- Toast / 通知 --- */
+body.css-bg .toast {
+  background-color: #fff;
+  color: #2d3748;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* --- 弹窗：半透明白蒙层，跟随背景色，CSS 变量 cascading --- */
+body.css-bg .modal-backdrop {
+  background-color: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+}
+
+body.css-bg .modal {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+  --bg-input: rgba(255,255,255,0.15);
+  --bg-card: rgba(255,255,255,0.1);
+  --bg-sidebar: transparent;
+  --border-color: rgba(0,0,0,0.06);
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --accent-color: #3b82f6;
+  color: #2d3748;
+}
+
+body.css-bg .modal-header {
+  border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+body.css-bg .modal .close-btn-circle {
+  color: #a0aec0;
+}
+body.css-bg .modal .close-btn-circle:hover {
+  color: #2d3748;
+  background-color: rgba(0,0,0,0.06);
+}
+
+body.css-bg .btn-primary {
+  background: #3b82f6;
+  color: #fff;
+}
+
+body.css-bg .btn-secondary {
+  background: rgba(255,255,255,0.12);
+  color: #4a5568;
+  border-color: rgba(0,0,0,0.06);
+}
+body.css-bg .btn-secondary:hover {
+  background: rgba(255,255,255,0.2);
+  color: #1a202c;
+}
+
+/* 输入框透底色 */
+body.css-bg .modal input[type="text"],
+body.css-bg .modal input[type="password"],
+body.css-bg .modal textarea,
+body.css-bg .modal select {
+  background: rgba(255,255,255,0.1);
+  color: #2d3748;
+  border-color: rgba(0,0,0,0.06);
+}
+body.css-bg .modal input::placeholder,
+body.css-bg .modal textarea::placeholder {
+  color: #a0aec0;
+}
+
+/* ==========================================================================
    App Container Grid
    ========================================================================== */
 .app-container {
@@ -122,7 +566,7 @@ body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 20px 16px;
+  padding: 12px 12px 8px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -1528,30 +1972,38 @@ body {
    Multi-Novel bookshelf styles
    ========================================================================== */
 .novel-section {
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background-color: rgba(22, 27, 38, 0.3);
+  border: none;
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   transition: all var(--transition-normal);
 }
 
 .novel-section.active {
-  border-color: var(--accent-color);
-  background-color: rgba(22, 27, 38, 0.5);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .novel-section-header {
   padding: 10px 14px;
-  background-color: rgba(22, 27, 38, 0.4);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: none;
 }
 
 .novel-section.collapsed .novel-section-header {
   border-bottom: none;
+}
+
+.novel-section.active .novel-section-header {
+  border-left: 3px solid var(--accent-color);
+  padding-left: 11px;
 }
 
 .novel-title-click {
@@ -1612,11 +2064,12 @@ body {
 }
 
 .novel-section-content {
-  padding: 12px;
+  padding: 4px 0 0 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 55vh;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1660,6 +2113,27 @@ body {
 .sub-group-ctrl-btn svg {
   width: 10px;
   height: 10px;
+}
+
+/* ============ body.dark-bg: 深色夜间模式 ============ */
+body.dark-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+body.dark-bg #app-background { display: none; }
+
+body.dark-bg .sidebar {
+  background-color: rgba(22, 27, 38, 0.88);
+}
+
+body.dark-bg .editor-container {
+  background: rgba(12, 17, 24, 0.82);
+}
+
+body.dark-bg .agent-task-container {
+  background: rgba(12, 17, 24, 0.7);
 }
 
 /* ==========================================================================
@@ -2206,5 +2680,61 @@ body {
   background-color: #2563eb;
   border-color: #2563eb;
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* ==========================================================================
+   Background Selector
+   ========================================================================== */
+.bg-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bg-option {
+  position: relative;
+  width: 80px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.bg-option:hover {
+  border-color: var(--text-secondary);
+  transform: scale(1.05);
+}
+
+.bg-option.selected {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.bg-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bg-option .bg-check {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.bg-option.selected .bg-check {
+  display: flex;
 }
 
