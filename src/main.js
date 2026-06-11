@@ -1,6 +1,3 @@
-  bgImage: localStorage.getItem("novel_bg_image") || "solid-warm-white",
-  apiKeys: safeJsonParse(localStorage.getItem("novel_api_keys"), [], "novel_api_keys"),
-  activeApiKeyId: localStorage.getItem("novel_active_api_key_id") || ""
 import { marked } from 'marked';
 
 // 配置 marked 以支持安全渲染和换行
@@ -205,6 +202,8 @@ const migratedDefaultNovel = {
   activeTarget: safeJsonParse(localStorage.getItem('novel_active_target'), { type: 'chapter', id: 'chapter-3' }, 'novel_active_target'),
   categoryOrder: cloneDefault(DEFAULT_CATEGORY_ORDER)
 };
+
+/* ==========================================================================
    Background Images
    ========================================================================== */
 const BG_IMAGES = [
@@ -458,12 +457,15 @@ async function syncUserDataToServer() {
   }
 }
 
+function saveState() {
+  localStorage.setItem('multi_novels', JSON.stringify(state.novels));
   localStorage.setItem('multi_active_novel_id', state.activeNovelId);
   localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
   localStorage.setItem('novel_api_key', state.apiKey);
   localStorage.setItem('novel_api_model', state.apiModel);
   localStorage.setItem('novel_api_url', state.apiUrl);
   localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
+  localStorage.setItem('novel_bg_image', state.bgImage);
   persistStateToDatabase();
 }
 
@@ -487,8 +489,7 @@ async function persistStateToDatabase() {
   } catch (e) {
     // SQLite 不可用时静默降级
   }
-=======
-  const uname = localStorage.getItem('novel_username');
+ const uname = localStorage.getItem('novel_username');
   if (uname) {
     localStorage.setItem(`multi_novels_${uname}`, JSON.stringify(state.novels));
     localStorage.setItem(`multi_active_novel_id_${uname}`, state.activeNovelId);
@@ -2836,9 +2837,8 @@ function renderTaskApiSwitch() {
 function openSettingsModal() {
   elements.modelInput.value = state.apiModel || 'gemini-2.0-flash';
   elements.apiUrlInput.value = state.apiUrl || 'https://generativelanguage.googleapis.com';
-  renderBgSelector();
-=======
   syncActiveApiKeyFromSlots();
+  renderBgSelector();
   
   const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId) || state.apiKeys[0];
   elements.apiKeyInput.value = activeSlot.apiKey || '';
@@ -11004,6 +11004,7 @@ function initEvents() {
 
 /* ==========================================================================
    Initialization Launcher
+   ========================================================================== */
 async function restoreFromDatabase() {
   try {
     const res = await fetch('/api/load-state');
@@ -11036,10 +11037,6 @@ async function restoreFromDatabase() {
   }
 }
 
-async function init() {
-  await restoreFromDatabase();
-  
-=======
 async function loadUserDataAndLaunch(username, token) {
   const userDisplayName = document.getElementById('user-display-name');
   if (userDisplayName) {
