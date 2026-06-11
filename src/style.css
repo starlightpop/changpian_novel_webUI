@@ -820,6 +820,8 @@ body.css-bg .modal textarea::placeholder {
    ========================================================================== */
 .editor-container {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -923,6 +925,8 @@ body.css-bg .modal textarea::placeholder {
    ========================================================================== */
 .editor-workspace {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0 40px;
@@ -1004,11 +1008,17 @@ body.css-bg .modal textarea::placeholder {
 /* Editor Body Area */
 .editor-body {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   position: relative;
   overflow-y: auto;
   padding: 24px 0;
   display: flex;
   flex-direction: column;
+}
+
+.editor-body.graph-active {
+  overflow: hidden;
 }
 
 #editor-textarea {
@@ -1106,25 +1116,33 @@ body.css-bg .modal textarea::placeholder {
 
 .knowledge-graph-view {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .graph-toolbar {
+  flex: 0 0 auto;
+  min-width: 0;
   padding: 0 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .graph-toolbar > div {
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 10px;
 }
 
 .graph-controls {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -1170,9 +1188,11 @@ body.css-bg .modal textarea::placeholder {
 }
 
 .character-graph-svg {
+  display: block;
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-width: 0;
+  min-height: 0;
   cursor: grab;
 }
 
@@ -1426,6 +1446,57 @@ body.css-bg .modal textarea::placeholder {
   color: var(--text-muted);
   font-size: 0.7rem;
   line-height: 1.55;
+}
+
+.reference-upload {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 9px;
+  border: 1px dashed rgba(96, 165, 250, 0.55);
+  border-radius: 7px;
+  background: rgba(30, 64, 175, 0.1);
+  cursor: default;
+}
+
+.reference-upload label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reference-upload label svg {
+  width: 14px;
+  height: 14px;
+}
+
+.reference-upload input {
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.reference-upload small {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.reference-upload.is-working {
+  border-color: #f59e0b;
+}
+
+.reference-upload.is-ready {
+  border-color: #10b981;
+}
+
+.reference-upload.is-error {
+  border-color: var(--danger-color);
 }
 
 .workflow-guide-note {

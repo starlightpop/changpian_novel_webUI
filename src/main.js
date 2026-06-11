@@ -1,4 +1,6 @@
-import './style.css';
+  bgImage: localStorage.getItem("novel_bg_image") || "solid-warm-white",
+  apiKeys: safeJsonParse(localStorage.getItem("novel_api_keys"), [], "novel_api_keys"),
+  activeApiKeyId: localStorage.getItem("novel_active_api_key_id") || ""
 import { marked } from 'marked';
 
 // 配置 marked 以支持安全渲染和换行
@@ -47,8 +49,11 @@ const TYPE_METADATA = {
   'plot-causal-chain': { name: '剧情因果链', icon: 'git-merge' },
   'plot-timeline': { name: '时空与多线叙事', icon: 'clock-3' },
   'plot-audit': { name: '剧情审计报告', icon: 'scan-search' },
+  'story-constitution': { name: '作品宪法（背景与简介硬约束）', icon: 'scroll-text' },
   'final-outline': { name: '最终综合大纲', icon: 'book-check' },
-  'final-audit': { name: '全书终审报告', icon: 'badge-check' }
+  'final-audit': { name: '全书终审报告', icon: 'badge-check' },
+  'reference-analysis': { name: '原著结构拆解', icon: 'file-text' },
+  'character-audit': { name: '人物和势力审计报告', icon: 'badge-check' }
 };
 
 const CHARACTER_TYPE_ORDER = [
@@ -158,6 +163,7 @@ const DEFAULT_CATEGORY_ORDER = {
   'character-growth': [...CHARACTER_TYPE_ORDER],
   'themes-core': ['core-power', 'secret-clue'],
   'plot-framework': [
+    'story-constitution',
     'narrative-kernel',
     'main-outline',
     'event-card',
@@ -199,8 +205,6 @@ const migratedDefaultNovel = {
   activeTarget: safeJsonParse(localStorage.getItem('novel_active_target'), { type: 'chapter', id: 'chapter-3' }, 'novel_active_target'),
   categoryOrder: cloneDefault(DEFAULT_CATEGORY_ORDER)
 };
-
-/* ==========================================================================
    Background Images
    ========================================================================== */
 const BG_IMAGES = [
@@ -232,6 +236,30 @@ const BG_IMAGES = [
   { id: 'dark-starry',       name: '星空夜', group: '深色夜间', type: 'dark', value: 'linear-gradient(135deg, #0b0e1a, #161b2e)' },
   { id: 'none',               name: '默认渐变', group: '系统',     type: 'light',  value: '' }
 ];
+function syncActiveApiKeyFromSlots() {
+  if (!state.apiKeys || !Array.isArray(state.apiKeys) || state.apiKeys.length === 0) {
+    state.apiKeys = [
+      {
+        id: 'slot-1',
+        name: '模型配置 1',
+        apiKey: state.apiKey || '',
+        apiModel: state.apiModel || 'gemini-2.0-flash',
+        apiUrl: state.apiUrl || 'https://generativelanguage.googleapis.com'
+      }
+    ];
+    state.activeApiKeyId = 'slot-1';
+  }
+  
+  let activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+  if (!activeSlot) {
+    activeSlot = state.apiKeys[0];
+    state.activeApiKeyId = activeSlot.id;
+  }
+  
+  state.apiKey = activeSlot.apiKey || '';
+  state.apiModel = activeSlot.apiModel || 'gemini-2.0-flash';
+  state.apiUrl = activeSlot.apiUrl || 'https://generativelanguage.googleapis.com';
+}
 
 let state = {
   novels: safeJsonParse(localStorage.getItem('multi_novels'), [migratedDefaultNovel], 'multi_novels'),
@@ -239,9 +267,11 @@ let state = {
   apiKey: localStorage.getItem('novel_api_key') || '',
   apiModel: localStorage.getItem('novel_api_model') || 'gemini-2.0-flash',
   apiUrl: localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com',
-  viewMode: localStorage.getItem('novel_view_mode') || 'edit',
-  bgImage: localStorage.getItem('novel_bg_image') || 'solid-warm-white'
+  bgImage: localStorage.getItem('novel_bg_image') || 'solid-warm-white',
+  apiKeys: safeJsonParse(localStorage.getItem('novel_api_keys'), [], 'novel_api_keys'),
+  activeApiKeyId: localStorage.getItem('novel_active_api_key_id') || ''
 };
+syncActiveApiKeyFromSlots();
 if (!Array.isArray(state.novels) || !state.novels.length) {
   state.novels = [migratedDefaultNovel];
 }
@@ -260,6 +290,7 @@ const activeIdx = collapsedNovels.indexOf(state.activeNovelId);
 if (activeIdx > -1) collapsedNovels.splice(activeIdx, 1);
 
 let heartbeatState = safeJsonParse(localStorage.getItem('agent_heartbeat_state'), {}, 'agent_heartbeat_state');
+let novelInfoModalOpenedFrom = null;
 
 function sanitizeLegacyEnglishLabels(obj) {
   if (typeof obj === 'string') {
@@ -383,8 +414,50 @@ if (hasMigration) {
   localStorage.setItem('multi_novels', JSON.stringify(state.novels));
 }
 
-function saveState() {
-  localStorage.setItem('multi_novels', JSON.stringify(state.novels));
+let syncTimeout = null;
+
+async function syncUserDataToServer() {
+  const username = localStorage.getItem('novel_username');
+  const token = localStorage.getItem('novel_session_token');
+  if (!username || !token) return;
+  
+  const payload = {
+    novels: state.novels,
+    activeNovelId: state.activeNovelId,
+    apiKey: state.apiKey,
+    apiModel: state.apiModel,
+    apiUrl: state.apiUrl,
+    viewMode: state.viewMode || 'edit',
+    collapsedNovels,
+    heartbeatState,
+    apiKeys: state.apiKeys,
+    activeApiKeyId: state.activeApiKeyId
+  };
+  
+  try {
+    const response = await fetch('/api/user/save-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Token': token
+      },
+      body: JSON.stringify(payload)
+    });
+    if (response.status === 401) {
+      alert('您的登录已过期，请重新登录以同步数据。');
+      localStorage.removeItem('novel_session_token');
+      localStorage.removeItem('novel_username');
+      location.reload();
+      return;
+    }
+    if (!response.ok) {
+      console.warn('同步用户数据失败:', response.statusText);
+    }
+  } catch (error) {
+    console.error('同步数据到服务器时发生错误:', error);
+  }
+}
+
   localStorage.setItem('multi_active_novel_id', state.activeNovelId);
   localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
   localStorage.setItem('novel_api_key', state.apiKey);
@@ -414,9 +487,41 @@ async function persistStateToDatabase() {
   } catch (e) {
     // SQLite 不可用时静默降级
   }
+=======
+  const uname = localStorage.getItem('novel_username');
+  if (uname) {
+    localStorage.setItem(`multi_novels_${uname}`, JSON.stringify(state.novels));
+    localStorage.setItem(`multi_active_novel_id_${uname}`, state.activeNovelId);
+    localStorage.setItem(`collapsed_novels_${uname}`, JSON.stringify(collapsedNovels));
+    localStorage.setItem(`novel_api_key_${uname}`, state.apiKey);
+    localStorage.setItem(`novel_api_model_${uname}`, state.apiModel);
+    localStorage.setItem(`novel_api_url_${uname}`, state.apiUrl);
+    localStorage.setItem(`novel_view_mode_${uname}`, state.viewMode || 'edit');
+    localStorage.setItem(`novel_api_keys_${uname}`, JSON.stringify(state.apiKeys));
+    localStorage.setItem(`novel_active_api_key_id_${uname}`, state.activeApiKeyId);
+  } else {
+    localStorage.setItem('multi_novels', JSON.stringify(state.novels));
+    localStorage.setItem('multi_active_novel_id', state.activeNovelId);
+    localStorage.setItem('collapsed_novels', JSON.stringify(collapsedNovels));
+    localStorage.setItem('novel_api_key', state.apiKey);
+    localStorage.setItem('novel_api_model', state.apiModel);
+    localStorage.setItem('novel_api_url', state.apiUrl);
+    localStorage.setItem('novel_view_mode', state.viewMode || 'edit');
+    localStorage.setItem('novel_api_keys', JSON.stringify(state.apiKeys));
+    localStorage.setItem('novel_active_api_key_id', state.activeApiKeyId);
+  }
+
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(syncUserDataToServer, 2000);
 }
 
 function applyViewMode() {
+  if (!elements.knowledgeGraphView.classList.contains('hidden')) {
+    elements.editorTextarea.classList.add('hidden');
+    elements.editorPreview.classList.add('hidden');
+    return;
+  }
+
   const mode = state.viewMode || 'edit';
   if (mode === 'preview') {
     elements.modePreview.classList.add('active');
@@ -450,6 +555,7 @@ const elements = {
   
   chapterSelect: document.getElementById('chapter-select'),
   addChapterBtn: document.getElementById('add-chapter-btn'),
+  editorBody: document.querySelector('.editor-body'),
   editorTextarea: document.getElementById('editor-textarea'),
   editorPreview: document.getElementById('editor-preview'),
   btnBold: document.getElementById('btn-bold'),
@@ -475,14 +581,28 @@ const elements = {
   graphCharacterOriginalName: document.getElementById('graph-character-original-name'),
   graphCharacterName: document.getElementById('graph-character-name'),
   graphCharacterIdentity: document.getElementById('graph-character-identity'),
+  graphCharacterPublicIdentity: document.getElementById('graph-character-public-identity'),
+  graphCharacterHiddenIdentities: document.getElementById('graph-character-hidden-identities'),
+  graphCharacterIdentityRevealStage: document.getElementById('graph-character-identity-reveal-stage'),
   graphCharacterFaction: document.getElementById('graph-character-faction'),
+  graphCharacterFactionScope: document.getElementById('graph-character-faction-scope'),
+  graphCharacterStoryFunction: document.getElementById('graph-character-story-function'),
+  graphCharacterAgeAppearance: document.getElementById('graph-character-age-appearance'),
   graphCharacterPersonality: document.getElementById('graph-character-personality'),
+  graphCharacterLifeHistory: document.getElementById('graph-character-life-history'),
+  graphCharacterGrowthHistory: document.getElementById('graph-character-growth-history'),
   graphCharacterDesire: document.getElementById('graph-character-desire'),
   graphCharacterGoal: document.getElementById('graph-character-goal'),
   graphCharacterInterests: document.getElementById('graph-character-interests'),
+  graphCharacterAgency: document.getElementById('graph-character-agency'),
+  graphCharacterAbility: document.getElementById('graph-character-ability'),
+  graphCharacterWeakness: document.getElementById('graph-character-weakness'),
   graphCharacterArc: document.getElementById('graph-character-arc'),
   graphCharacterHighlight: document.getElementById('graph-character-highlight'),
   graphCharacterFate: document.getElementById('graph-character-fate'),
+  graphCharacterPlotAnchor: document.getElementById('graph-character-plot-anchor'),
+  graphCharacterSettingBasis: document.getElementById('graph-character-setting-basis'),
+  graphCharacterForeshadowLink: document.getElementById('graph-character-foreshadow-link'),
   graphRelationForm: document.getElementById('graph-relation-form'),
   graphRelationIndex: document.getElementById('graph-relation-index'),
   graphRelationSource: document.getElementById('graph-relation-source'),
@@ -571,6 +691,32 @@ const elements = {
   novelInfoSynopsis: document.getElementById('novel-info-synopsis'),
   closeNovelInfoModal: document.getElementById('close-novel-info-modal'),
   cancelNovelInfo: document.getElementById('cancel-novel-info'),
+  
+  // Settings / File Inputs
+  newNovelFile: document.getElementById('new-novel-file'),
+  referenceNovelFile: document.getElementById('reference-novel-file'),
+  referenceNovelStatus: document.getElementById('reference-novel-status'),
+  newNovelReferenceStatus: document.getElementById('new-novel-reference-status'),
+
+  // Reference Manager Modal
+  referenceManagerModal: document.getElementById('reference-manager-modal'),
+  referenceFileList: document.getElementById('reference-file-list'),
+  btnManagerAddFile: document.getElementById('btn-manager-add-file'),
+  managerAddFileInput: document.getElementById('manager-add-file-input'),
+  btnCancelReferenceManager: document.getElementById('btn-cancel-reference-manager'),
+  btnConfirmReferenceAnalysis: document.getElementById('btn-confirm-reference-analysis'),
+  referenceConfirmCount: document.getElementById('reference-confirm-count'),
+
+  // Progress modal
+  referenceProgressModal: document.getElementById('reference-progress-modal'),
+  referenceLogContent: document.getElementById('reference-log-content'),
+  referenceProgressBar: document.getElementById('reference-progress-bar'),
+  referenceProgressPercentage: document.getElementById('reference-progress-percentage'),
+  referenceProgressStatus: document.getElementById('reference-progress-status'),
+  btnCloseReferenceProgress: document.getElementById('btn-close-reference-progress'),
+
+  // Outline review report
+  outlineAuditReport: document.getElementById('outline-audit-report'),
 
   // Settings Modal
   settingsBtn: document.getElementById('settings-btn'),
@@ -580,7 +726,11 @@ const elements = {
   apiKeyInput: document.getElementById('api-key-input'),
   modelInput: document.getElementById('model-input'),
   closeSettingsModal: document.getElementById('close-settings-modal'),
-  btnCancelSettings: document.getElementById('btn-cancel-settings')
+  btnCancelSettings: document.getElementById('btn-cancel-settings'),
+  settingsSlotsContainer: document.getElementById('settings-slots-container'),
+  slotNameInput: document.getElementById('slot-name-input'),
+  btnDeleteSlot: document.getElementById('btn-delete-slot'),
+  taskApiSwitchContainer: document.getElementById('task-api-switch-container')
 };
 
 /* ==========================================================================
@@ -671,7 +821,7 @@ function renderNovels() {
     // Rename handler
     headerDiv.querySelector('.edit-novel').addEventListener('click', (e) => {
       e.stopPropagation();
-      openNovelInfoModal(novel);
+      openNovelInfoModal(novel, 'edit-button');
     });
 
     // Delete handler
@@ -1119,6 +1269,7 @@ function switchEditorTarget(type, id) {
   });
 
   if (type === 'chapter') {
+    elements.editorBody.classList.remove('graph-active');
     elements.knowledgeGraphView.classList.add('hidden');
     applyViewMode();
     elements.chapterSelect.classList.remove('hidden');
@@ -1140,10 +1291,12 @@ function switchEditorTarget(type, id) {
       if (asset.type === 'character-network' && activeNovel.characterBible?.length) {
         elements.editorTextarea.classList.add('hidden');
         elements.editorPreview.classList.add('hidden');
+        elements.editorBody.classList.add('graph-active');
         elements.knowledgeGraphView.classList.remove('hidden');
         renderCharacterGraph(activeNovel);
         return;
       }
+      elements.editorBody.classList.remove('graph-active');
       elements.knowledgeGraphView.classList.add('hidden');
       applyViewMode();
       const typeMetadata = {
@@ -1163,6 +1316,228 @@ function switchEditorTarget(type, id) {
 function getFactionColor(faction, factionIndex) {
   const palette = ['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'];
   return palette[factionIndex % palette.length];
+}
+
+function isMalformedCharacterName(name) {
+  const value = String(name || '').trim();
+  return !value || value.length > 40 || /[\r\n#*]/.test(value);
+}
+
+function extractCanonicalCharacterName(rawName, knownNames = []) {
+  const value = String(rawName || '').trim();
+  if (!value) return '';
+  if (!isMalformedCharacterName(value)) return value;
+
+  const matchedKnownName = [...new Set(knownNames.map(name => String(name || '').trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find(name => value === name || (
+      value.startsWith(name) &&
+      /^[（(\s:：\-—]/.test(value.slice(name.length, name.length + 1))
+    ));
+  if (matchedKnownName) return matchedKnownName;
+
+  const firstLine = value.split(/\r?\n/, 1)[0]
+    .replace(/^[#*\-\s]+/, '')
+    .replace(/\*\*/g, '')
+    .trim();
+  const candidate = firstLine.split(/[（(:：]/, 1)[0].trim();
+  return candidate && candidate.length <= 30 && !/[#*\r\n]/.test(candidate)
+    ? candidate
+    : value;
+}
+
+function abbreviateGraphLabel(value, maxLength = 18) {
+  const normalized = String(value || '未命名')
+    .replace(/\s+/g, ' ')
+    .replace(/[*#]/g, '')
+    .trim();
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1)}…`
+    : normalized;
+}
+
+function restoreCharacterFieldsFromEmbeddedProfile(character, rawName) {
+  const text = String(rawName || '');
+  if (!/[\r\n]/.test(text)) return;
+  const fieldMap = {
+    '公开身份': 'publicIdentity',
+    '隐藏身份': 'hiddenIdentities',
+    '身份揭露': 'identityRevealStage',
+    '阵营': 'faction',
+    '势力范围与权限': 'factionScope',
+    '性格': 'personality',
+    '欲望': 'desire',
+    '目标': 'goal',
+    '利益与底线': 'interests',
+    '主观能动性': 'agency',
+    '能力与资源': 'ability',
+    '缺陷与代价': 'weakness',
+    '设定依据': 'settingBasis',
+    '总纲锚点': 'plotAnchor',
+    '伏笔与回收链': 'foreshadowLink',
+    '人物生平': 'lifeHistory',
+    '成长史': 'growthHistory',
+    '人物弧光': 'arc',
+    '人物高光': 'highlight',
+    '最终命运': 'fate'
+  };
+  const matches = text.matchAll(/^- \*\*([^*]+)\*\*[：:]\s*(.+)$/gm);
+  for (const match of matches) {
+    const field = fieldMap[match[1].trim()];
+    const value = match[2].trim();
+    if (!field || !value) continue;
+    if (field === 'hiddenIdentities') {
+      if (!Array.isArray(character.hiddenIdentities) || !character.hiddenIdentities.length) {
+        character.hiddenIdentities = /^(无|暂无)$/.test(value) ? [] : [value];
+      }
+    } else if (!String(character[field] || '').trim()) {
+      character[field] = value;
+    }
+  }
+}
+
+function repairNovelCharacterGraphData(novel) {
+  const characters = Array.isArray(novel?.characterBible) ? novel.characterBible : [];
+  const relations = Array.isArray(novel?.characterRelations) ? novel.characterRelations : [];
+  if (!characters.length) return { renamed: 0, invalidRelations: 0, isolatedCharacters: 0 };
+
+  const relationNames = relations.flatMap(relation => [relation.source, relation.target]);
+  const rosterNames = (novel.characterRosterDraft?.characters || []).map(character => character?.name);
+  const knownNames = [...relationNames, ...rosterNames].filter(Boolean);
+  const occupiedNames = new Set(characters.map(character => String(character?.name || '').trim()).filter(Boolean));
+  const renamed = new Map();
+
+  characters.forEach(character => {
+    const oldName = String(character?.name || '').trim();
+    if (!isMalformedCharacterName(oldName)) return;
+    const cleanName = extractCanonicalCharacterName(oldName, knownNames);
+    if (!cleanName || cleanName === oldName || occupiedNames.has(cleanName)) return;
+    restoreCharacterFieldsFromEmbeddedProfile(character, oldName);
+    character.name = cleanName;
+    occupiedNames.delete(oldName);
+    occupiedNames.add(cleanName);
+    renamed.set(oldName, cleanName);
+  });
+
+  if (renamed.size) {
+    relations.forEach(relation => {
+      relation.source = renamed.get(relation.source) || relation.source;
+      relation.target = renamed.get(relation.target) || relation.target;
+    });
+    characters.forEach(character => {
+      (character.relationships || []).forEach(relation => {
+        relation.target = renamed.get(relation.target) || relation.target;
+      });
+    });
+    (novel.assets || []).forEach(asset => {
+      renamed.forEach((cleanName, oldName) => {
+        if (asset.characterName === oldName) asset.characterName = cleanName;
+        if (asset.characterData?.name === oldName) asset.characterData.name = cleanName;
+        asset.name = replaceNameInStructuredValue(asset.name, oldName, cleanName);
+        asset.desc = replaceNameInStructuredValue(asset.desc, oldName, cleanName);
+      });
+    });
+    syncEmbeddedCharacterRelationships(novel);
+    refreshTopologyAsset(novel);
+  }
+
+  const hydratedFields = hydrateNovelCharacterProfiles(novel);
+  const names = new Set(characters.map(character => character.name));
+  const validRelations = relations.filter(relation =>
+    names.has(relation.source) &&
+    names.has(relation.target) &&
+    relation.source !== relation.target
+  );
+  const connectedNames = new Set(validRelations.flatMap(relation => [relation.source, relation.target]));
+  return {
+    renamed: renamed.size,
+    hydratedFields,
+    invalidRelations: relations.length - validRelations.length,
+    isolatedCharacters: characters.filter(character => !connectedNames.has(character.name)).length
+  };
+}
+
+const COMPLETE_CHARACTER_PROFILE_FIELDS = [
+  'identity', 'publicIdentity', 'identityRevealStage', 'faction', 'factionScope',
+  'storyFunction', 'ageAndAppearance', 'personality', 'desire', 'goal', 'interests',
+  'agency', 'ability', 'weakness', 'settingBasis', 'plotAnchor', 'foreshadowLink',
+  'lifeHistory', 'growthHistory', 'arc', 'highlight', 'fate'
+];
+
+function createCharacterFieldFallback(character, field) {
+  const name = character.name || '该人物';
+  const identity = character.identity || '现有身份';
+  const faction = character.faction || '所属阵营';
+  const fallbacks = {
+    identity: '身份待补充',
+    publicIdentity: identity,
+    identityRevealStage: '无',
+    faction: '未归属',
+    factionScope: `${faction}及其相关剧情活动范围`,
+    storyFunction: `以${identity}身份参与主线并影响人物关系与剧情走向`,
+    ageAndAppearance: `年龄与外貌符合${identity}的身份、经历和世界观`,
+    personality: `性格与${identity}的经历、利益和立场保持一致`,
+    desire: `维护自身重视的人与生活，并实现与${identity}相符的个人愿望`,
+    goal: `在主线推进中完成自身职责并解决与${name}直接相关的矛盾`,
+    interests: `维护个人安全、重要关系及${faction}中的核心利益`,
+    agency: `依据自身判断主动选择行动，并承担选择造成的后果`,
+    ability: `具备与${identity}相匹配的知识、技能、人脉或行动资源`,
+    weakness: `受身份边界、资源限制和个人执念影响，需要为关键选择付出代价`,
+    settingBasis: `依据现有背景设定、人物身份、所属阵营和已审核总纲`,
+    plotAnchor: `参与与${name}身份、阵营及直接关系相关的主线阶段`,
+    foreshadowLink: `通过其身份选择和人物关系承担铺垫、转折或回收作用`,
+    lifeHistory: `${name}以${identity}身份生活于${faction}，其经历、立场和关系共同塑造了当前选择。`,
+    growthHistory: `${name}在主线冲突和关系变化中调整原有认知，并逐步形成更明确的行动立场。`,
+    arc: `${name}从受既有身份与处境限制，成长为能够主动选择并承担代价的人。`,
+    highlight: `${name}在关键剧情节点运用自身能力和资源作出不可替代的主动选择。`,
+    fate: `${name}的最终结局由其核心欲望、关键选择、人物关系和所付代价共同决定。`
+  };
+  return fallbacks[field] || '暂无详细设定';
+}
+
+function ensureCompleteCharacterProfile(character) {
+  let changed = 0;
+  COMPLETE_CHARACTER_PROFILE_FIELDS.forEach(field => {
+    if (!String(character[field] || '').trim()) {
+      character[field] = createCharacterFieldFallback(character, field);
+      changed += 1;
+    }
+  });
+  if (!Array.isArray(character.hiddenIdentities)) {
+    character.hiddenIdentities = [];
+    changed += 1;
+  }
+  if (!Array.isArray(character.relationships)) {
+    character.relationships = [];
+    changed += 1;
+  }
+  return changed;
+}
+
+function hydrateNovelCharacterProfiles(novel) {
+  const characters = Array.isArray(novel?.characterBible) ? novel.characterBible : [];
+  if (!characters.length) return 0;
+
+  let changed = 0;
+  const characterAssets = (novel.assets || []).filter(asset =>
+    asset?.characterName && typeof asset.desc === 'string'
+  );
+  characterAssets.forEach(asset => {
+    const character = characters.find(item => item.name === asset.characterName);
+    if (!character) return;
+    const before = COMPLETE_CHARACTER_PROFILE_FIELDS
+      .map(field => String(character[field] || ''))
+      .join('\u0000');
+    syncCharacterFromAsset(novel, asset);
+    const after = COMPLETE_CHARACTER_PROFILE_FIELDS
+      .map(field => String(character[field] || ''))
+      .join('\u0000');
+    if (before !== after) changed += 1;
+  });
+  characters.forEach(character => {
+    changed += ensureCompleteCharacterProfile(character);
+  });
+  return changed;
 }
 
 let characterGraphTransform = { x: 0, y: 0, scale: 1 };
@@ -1342,7 +1717,7 @@ function rebuildDerivedCharacterAssets(novel) {
   }
 }
 
-function commitGraphEdit(novel) {
+function commitGraphEdit(novel, selectedCharacterName = '') {
   novel.assets = (novel.assets || []).filter(asset => !['final-outline', 'final-audit'].includes(asset.type));
   novel.finalAudit = null;
   novel.finalOutline = null;
@@ -1353,6 +1728,11 @@ function commitGraphEdit(novel) {
   void persistNovelKnowledgeGraph(novel);
   renderNovels();
   renderCharacterGraph(novel);
+  if (selectedCharacterName) {
+    const selectedNode = [...elements.characterGraphSvg.querySelectorAll('.graph-node')]
+      .find(node => node.dataset.name === selectedCharacterName);
+    selectedNode?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }
 }
 
 function updateCharacterGlobally(novel, oldName, updates) {
@@ -1394,7 +1774,8 @@ function updateCharacterGlobally(novel, oldName, updates) {
     if (asset) asset.characterName = newName;
   }
   Object.assign(character, updates, { name: newName });
-  commitGraphEdit(novel);
+  ensureCompleteCharacterProfile(character);
+  commitGraphEdit(novel, newName);
 }
 
 function updateRelationGlobally(novel, relationIndex, updates) {
@@ -1439,20 +1820,35 @@ function updateRelationGlobally(novel, relationIndex, updates) {
 }
 
 function openCharacterGraphEditor(character) {
+  ensureCompleteCharacterProfile(character);
   elements.graphEditTitle.textContent = `编辑人物：${character.name}`;
   elements.graphRelationForm.classList.add('hidden');
   elements.graphCharacterForm.classList.remove('hidden');
   elements.graphCharacterOriginalName.value = character.name;
   elements.graphCharacterName.value = character.name;
   elements.graphCharacterIdentity.value = character.identity || '';
+  elements.graphCharacterPublicIdentity.value = character.publicIdentity || '';
+  elements.graphCharacterHiddenIdentities.value = (character.hiddenIdentities || []).join('、');
+  elements.graphCharacterIdentityRevealStage.value = character.identityRevealStage || '';
   elements.graphCharacterFaction.value = character.faction || '';
+  elements.graphCharacterFactionScope.value = character.factionScope || '';
+  elements.graphCharacterStoryFunction.value = character.storyFunction || '';
+  elements.graphCharacterAgeAppearance.value = character.ageAndAppearance || '';
   elements.graphCharacterPersonality.value = character.personality || '';
+  elements.graphCharacterLifeHistory.value = character.lifeHistory || '';
+  elements.graphCharacterGrowthHistory.value = character.growthHistory || '';
   elements.graphCharacterDesire.value = character.desire || '';
   elements.graphCharacterGoal.value = character.goal || '';
   elements.graphCharacterInterests.value = character.interests || '';
+  elements.graphCharacterAgency.value = character.agency || '';
+  elements.graphCharacterAbility.value = character.ability || '';
+  elements.graphCharacterWeakness.value = character.weakness || '';
   elements.graphCharacterArc.value = character.arc || '';
   elements.graphCharacterHighlight.value = character.highlight || '';
   elements.graphCharacterFate.value = character.fate || '';
+  elements.graphCharacterPlotAnchor.value = character.plotAnchor || '';
+  elements.graphCharacterSettingBasis.value = character.settingBasis || '';
+  elements.graphCharacterForeshadowLink.value = character.foreshadowLink || '';
   elements.graphEditModal.classList.remove('hidden');
 }
 
@@ -1488,13 +1884,21 @@ function openRelationGraphEditor(novel, relationIndex) {
 
 function renderCharacterGraph(novel) {
   const characters = novel.characterBible || [];
+  characters.forEach(ensureCompleteCharacterProfile);
   const relations = novel.characterRelations || [];
+  const allCharacterNames = new Set(characters.map(character => character.name));
+  const validRelations = relations.filter(relation =>
+    allCharacterNames.has(relation.source) &&
+    allCharacterNames.has(relation.target) &&
+    relation.source !== relation.target
+  );
+  const invalidRelationCount = relations.length - validRelations.length;
   const svg = elements.characterGraphSvg;
   svg.innerHTML = '';
   svg.setAttribute('viewBox', '0 0 1200 760');
   const namespace = 'http://www.w3.org/2000/svg';
   const factions = [...new Set(characters.map(character => character.faction || '未归属'))];
-  const relationTypes = [...new Set(relations.map(relation => relation.type).filter(Boolean))].sort();
+  const relationTypes = [...new Set(validRelations.map(relation => relation.type).filter(Boolean))].sort();
   const searchQuery = elements.graphSearchInput.value.trim().toLowerCase();
   const factionFilter = elements.graphFactionFilter.value;
   const relationFilter = elements.graphRelationFilter.value;
@@ -1516,7 +1920,7 @@ function renderCharacterGraph(novel) {
       (!elements.graphFactionFilter.value || character.faction === elements.graphFactionFilter.value);
   });
   const visibleNames = new Set(visibleCharacters.map(character => character.name));
-  const visibleRelations = relations.filter(relation =>
+  const visibleRelations = validRelations.filter(relation =>
     visibleNames.has(relation.source) &&
     visibleNames.has(relation.target) &&
     (!elements.graphRelationFilter.value || relation.type === elements.graphRelationFilter.value)
@@ -1559,7 +1963,7 @@ function renderCharacterGraph(novel) {
     factionLabel.setAttribute('class', 'graph-faction-label');
     factionLabel.setAttribute('x', centroid.x);
     factionLabel.setAttribute('y', Math.max(18, centroid.y - radiusY + 16));
-    factionLabel.textContent = `${faction} · ${members.length}人`;
+    factionLabel.textContent = `${abbreviateGraphLabel(faction, 16)} · ${members.length}人`;
     factionLayer.appendChild(factionLabel);
   });
   visibleRelations.forEach(relation => {
@@ -1620,7 +2024,10 @@ function renderCharacterGraph(novel) {
     const label = document.createElementNS(namespace, 'text');
     const labelAbove = position.y > 650 || (position.y > 350 && position.x < 440);
     label.setAttribute('y', labelAbove ? -(nodeRadius + 8) : nodeRadius + 16);
-    label.textContent = character.name;
+    label.textContent = abbreviateGraphLabel(character.name, 12);
+    const labelTitle = document.createElementNS(namespace, 'title');
+    labelTitle.textContent = character.name;
+    group.appendChild(labelTitle);
     group.appendChild(label);
 
     group.addEventListener('click', () => {
@@ -1640,16 +2047,28 @@ function renderCharacterGraph(novel) {
           <div><dt>隐藏身份</dt><dd>${escapeHtml(character.hiddenIdentities?.join('、') || '无')}</dd></div>
           <div><dt>身份揭露</dt><dd>${escapeHtml(character.identityRevealStage || '无')}</dd></div>
           <div><dt>势力范围</dt><dd>${escapeHtml(character.factionScope || '未填写')}</dd></div>
+          <div><dt>剧情功能</dt><dd>${escapeHtml(character.storyFunction)}</dd></div>
+          <div><dt>年龄与外貌</dt><dd>${escapeHtml(character.ageAndAppearance)}</dd></div>
           <div><dt>性格</dt><dd>${escapeHtml(character.personality)}</dd></div>
           <div><dt>主要经历</dt><dd>${escapeHtml(character.lifeHistory)}</dd></div>
+          <div><dt>成长史</dt><dd>${escapeHtml(character.growthHistory)}</dd></div>
           <div><dt>人物弧光</dt><dd>${escapeHtml(character.arc)}</dd></div>
           <div><dt>高光时刻</dt><dd>${escapeHtml(character.highlight)}</dd></div>
           <div><dt>最终结局</dt><dd>${escapeHtml(character.fate)}</dd></div>
+          <div><dt>欲望</dt><dd>${escapeHtml(character.desire)}</dd></div>
+          <div><dt>目标</dt><dd>${escapeHtml(character.goal)}</dd></div>
+          <div><dt>利益与底线</dt><dd>${escapeHtml(character.interests)}</dd></div>
+          <div><dt>主观能动性</dt><dd>${escapeHtml(character.agency)}</dd></div>
+          <div><dt>能力与资源</dt><dd>${escapeHtml(character.ability)}</dd></div>
+          <div><dt>缺陷与代价</dt><dd>${escapeHtml(character.weakness)}</dd></div>
           <div><dt>总纲对应情节</dt><dd>${escapeHtml(character.plotAnchor)}</dd></div>
           <div><dt>设定依据</dt><dd>${escapeHtml(character.settingBasis)}</dd></div>
           <div><dt>伏笔与回收</dt><dd>${escapeHtml(character.foreshadowLink)}</dd></div>
-          <div><dt>欲望与目标</dt><dd>${escapeHtml(character.desire)}；${escapeHtml(character.goal)}</dd></div>
-          <div><dt>利益与主动性</dt><dd>${escapeHtml(character.interests)}；${escapeHtml(character.agency)}</dd></div>
+          <div><dt>直接关系</dt><dd>${escapeHtml(
+            (character.relationships || [])
+              .map(relation => `${relation.target}（${relation.type}）：${relation.dynamic || relation.conflict || '关系随剧情发展'}`)
+              .join('；') || '暂无直接关系'
+          )}</dd></div>
         </dl>
         <div class="graph-detail-actions">
           <button type="button" class="btn btn-primary" data-edit-character="${escapeHtml(character.name)}">编辑人物</button>
@@ -1703,8 +2122,14 @@ function renderCharacterGraph(novel) {
     applyTransform();
   };
 
+  const graphWarnings = invalidRelationCount
+    ? ` · ${invalidRelationCount} 条关系端点无效`
+    : '';
   elements.graphSummary.textContent =
-    `${visibleCharacters.length}/${characters.length} 人 · ${visibleRelations.length}/${relations.length} 条关系 · ${factions.length} 个势力`;
+    `${visibleCharacters.length}/${characters.length} 人 · ${visibleRelations.length}/${validRelations.length} 条关系 · ${factions.length} 个势力${graphWarnings}`;
+  elements.graphSummary.title = invalidRelationCount
+    ? '存在引用了人物库中不存在姓名的关系，请重新生成人物关系或编辑修复。'
+    : '';
   elements.graphNodeDetail.innerHTML = '<span>点击人物节点查看并编辑人物；点击关系连线查看并编辑关系。修改会同步到人物库、章节细纲和知识图谱。</span>';
 }
 
@@ -2142,7 +2567,8 @@ function moveAsset(novel, assetId, direction) {
 /* ==========================================================================
    Modal Handling
    ========================================================================== */
-function openNovelInfoModal(novel) {
+function openNovelInfoModal(novel, openedFrom = 'edit-button') {
+  novelInfoModalOpenedFrom = openedFrom;
   elements.novelInfoId.value = novel.id;
   elements.novelInfoName.value = novel.name || '';
   elements.novelInfoBackground.value = novel.background || '';
@@ -2154,6 +2580,7 @@ function openNovelInfoModal(novel) {
 function closeNovelInfoModal() {
   elements.novelInfoModal.classList.add('hidden');
   elements.novelInfoForm.reset();
+  novelInfoModalOpenedFrom = null;
 }
 
 function openAssetModal(group, asset = null) {
@@ -2240,6 +2667,12 @@ function closeAssetModal() {
 }
 
 function openNewNovelModal() {
+  pendingReferenceFiles = [];
+  pendingNewNovelAnalyses = [];
+  if (elements.newNovelReferenceStatus) {
+    elements.newNovelReferenceStatus.style.display = 'none';
+    elements.newNovelReferenceStatus.textContent = '';
+  }
   elements.newNovelModal.classList.remove('hidden');
   elements.newNovelError.classList.add('hidden');
   elements.newNovelProgress.classList.add('hidden');
@@ -2259,11 +2692,161 @@ function showNewNovelError(message) {
   elements.newNovelError.classList.remove('hidden');
 }
 
+function renderSettingsSlots() {
+  if (!elements.settingsSlotsContainer) return;
+  elements.settingsSlotsContainer.innerHTML = '';
+  
+  if (!state.apiKeys) state.apiKeys = [];
+  state.apiKeys.forEach(slot => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `slot-btn ${slot.id === state.activeApiKeyId ? 'active' : ''}`;
+    btn.innerHTML = `
+      <span>${slot.name || '配置槽'}</span>
+      <span style="font-size: 0.65rem; opacity: 0.7;">(${slot.apiModel || '未设定'})</span>
+    `;
+    btn.addEventListener('click', () => {
+      // Save current input values into the previously active slot first
+      const currentActive = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+      if (currentActive) {
+        currentActive.apiKey = elements.apiKeyInput.value.trim();
+        currentActive.apiUrl = elements.apiUrlInput.value.trim();
+        currentActive.apiModel = elements.modelInput.value.trim();
+      }
+      
+      state.activeApiKeyId = slot.id;
+      syncActiveApiKeyFromSlots();
+      
+      // Update fields
+      elements.apiKeyInput.value = slot.apiKey || '';
+      elements.apiUrlInput.value = slot.apiUrl || '';
+      elements.modelInput.value = slot.apiModel || '';
+      elements.slotNameInput.value = slot.name || '';
+      
+      renderSettingsSlots();
+      renderTaskApiSwitch();
+    });
+    elements.settingsSlotsContainer.appendChild(btn);
+  });
+  
+  // Add Slot button
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'slot-btn btn-add-slot';
+  addBtn.innerHTML = '<i data-lucide="plus" style="width: 14px; height: 14px;"></i>添加配置';
+  addBtn.addEventListener('click', () => {
+    // Save current active first
+    const currentActive = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+    if (currentActive) {
+      currentActive.apiKey = elements.apiKeyInput.value.trim();
+      currentActive.apiUrl = elements.apiUrlInput.value.trim();
+      currentActive.apiModel = elements.modelInput.value.trim();
+    }
+    
+    const newId = 'slot-' + Date.now();
+    const newSlot = {
+      id: newId,
+      name: `配置槽 ${state.apiKeys.length + 1}`,
+      apiKey: '',
+      apiModel: 'gemini-2.0-flash',
+      apiUrl: 'https://generativelanguage.googleapis.com'
+    };
+    state.apiKeys.push(newSlot);
+    state.activeApiKeyId = newId;
+    syncActiveApiKeyFromSlots();
+    
+    // Update inputs
+    elements.apiKeyInput.value = '';
+    elements.apiUrlInput.value = 'https://generativelanguage.googleapis.com';
+    elements.modelInput.value = 'gemini-2.0-flash';
+    elements.slotNameInput.value = newSlot.name;
+    
+    renderSettingsSlots();
+    renderTaskApiSwitch();
+    lucide.createIcons();
+  });
+  elements.settingsSlotsContainer.appendChild(addBtn);
+  
+  // Update slot name input for the current active slot
+  const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+  if (activeSlot) {
+    elements.slotNameInput.value = activeSlot.name || '';
+  }
+  
+  // Disable delete button if only 1 slot
+  if (state.apiKeys.length <= 1) {
+    elements.btnDeleteSlot.style.display = 'none';
+  } else {
+    elements.btnDeleteSlot.style.display = 'block';
+  }
+  
+  lucide.createIcons();
+}
+
+function renderTaskApiSwitch() {
+  if (!elements.taskApiSwitchContainer) return;
+  elements.taskApiSwitchContainer.innerHTML = '';
+  
+  if (!state.apiKeys || state.apiKeys.length === 0) {
+    syncActiveApiKeyFromSlots();
+  }
+  
+  // Add a small label
+  const label = document.createElement('span');
+  label.style.fontSize = '0.75rem';
+  label.style.color = 'var(--text-muted)';
+  label.style.alignSelf = 'center';
+  label.style.marginRight = '6px';
+  label.textContent = '当前AI模型：';
+  elements.taskApiSwitchContainer.appendChild(label);
+
+  state.apiKeys.forEach(slot => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `task-api-switch-btn ${slot.id === state.activeApiKeyId ? 'active' : ''}`;
+    const icon = slot.id === state.activeApiKeyId ? 'check' : 'cpu';
+    btn.innerHTML = `
+      <i data-lucide="${icon}" style="width: 12px; height: 12px;"></i>
+      <span>${slot.name || '未命名'}</span>
+      <span style="opacity: 0.6; font-size: 0.7rem; margin-left: 2px;">[${slot.apiModel || '未设定'}]</span>
+    `;
+    btn.addEventListener('click', () => {
+      state.activeApiKeyId = slot.id;
+      syncActiveApiKeyFromSlots();
+      saveState();
+      
+      // Update form values if settings modal is open
+      if (!elements.settingsModal.classList.contains('hidden')) {
+        elements.apiKeyInput.value = slot.apiKey || '';
+        elements.apiUrlInput.value = slot.apiUrl || '';
+        elements.modelInput.value = slot.apiModel || '';
+        elements.slotNameInput.value = slot.name || '';
+        renderSettingsSlots();
+      }
+      
+      renderTaskApiSwitch();
+      showToast(`已切换到 AI 配置：${slot.name} (${slot.apiModel})`, 'success');
+    });
+    elements.taskApiSwitchContainer.appendChild(btn);
+  });
+  
+  lucide.createIcons();
+}
+
 function openSettingsModal() {
-  elements.settingsModal.classList.remove('hidden');
-  elements.apiKeyInput.value = state.apiKey || '';
   elements.modelInput.value = state.apiModel || 'gemini-2.0-flash';
   elements.apiUrlInput.value = state.apiUrl || 'https://generativelanguage.googleapis.com';
+  renderBgSelector();
+=======
+  syncActiveApiKeyFromSlots();
+  
+  const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId) || state.apiKeys[0];
+  elements.apiKeyInput.value = activeSlot.apiKey || '';
+  elements.modelInput.value = activeSlot.apiModel || 'gemini-2.0-flash';
+  elements.apiUrlInput.value = activeSlot.apiUrl || 'https://generativelanguage.googleapis.com';
+  elements.slotNameInput.value = activeSlot.name || '';
+  
+  renderSettingsSlots();
   renderBgSelector();
 }
 
@@ -2567,6 +3150,437 @@ function compactString(value, maxChars) {
   return `${head}\n\n[...中间内容已压缩，保留首尾和关键约束...]\n\n${tail}`;
 }
 
+let pendingReferenceFiles = [];
+let pendingNewNovelAnalyses = [];
+let referenceAnalysisCallback = null;
+
+function buildReferenceNovelChunks(text, chunkSize = 9000, maxChunks = 16) {
+  const normalized = String(text || '').replace(/\r\n?/g, '\n').trim();
+  if (!normalized) return [];
+  const totalChunks = Math.ceil(normalized.length / chunkSize);
+  if (totalChunks <= maxChunks) {
+    return Array.from({ length: totalChunks }, (_, index) => ({
+      index: index + 1,
+      start: index * chunkSize,
+      text: normalized.slice(index * chunkSize, (index + 1) * chunkSize)
+    }));
+  }
+  const selected = new Set([0, totalChunks - 1]);
+  for (let index = 1; index < maxChunks - 1; index += 1) {
+    selected.add(Math.round(index * (totalChunks - 1) / (maxChunks - 1)));
+  }
+  return [...selected].sort((a, b) => a - b).map(chunkIndex => ({
+    index: chunkIndex + 1,
+    start: chunkIndex * chunkSize,
+    text: normalized.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize)
+  }));
+}
+
+function referenceAnalysisToMarkdown(analysis) {
+  const list = value => (Array.isArray(value) ? value : []).map(item =>
+    `- ${typeof item === 'string' ? item : JSON.stringify(item)}`
+  ).join('\n') || '- 未提取';
+  return `# 原著结构拆解（仅作低相似度技法参考）\n\n- **来源文件**：${analysis.fileName || '未命名 TXT'}\n- **原文字数**：${analysis.sourceLength || 0}\n- **分析片段**：${analysis.analyzedChunks || 0}\n- **说明**：不保存原著正文；禁止复制原著专有名词、标志性句子、人物组合和事件顺序。\n\n## 类型与读者承诺\n${analysis.genreAndAudience || '未提取'}\n\n## 人物原型与关系模式\n${list(analysis.characterArchetypes)}\n\n## 剧情架构与节奏\n${list(analysis.plotArchitecture)}\n${list(analysis.pacingModel)}\n\n## 因果链与伏笔技法\n${list(analysis.causalPatterns)}\n${list(analysis.foreshadowingPatterns)}\n\n## 世界规则与叙事技法\n${list(analysis.worldbuildingTechniques)}\n${list(analysis.transferableTechniques)}\n\n## 新书必须规避的复制风险\n${list(analysis.forbiddenCopyElements)}`;
+}
+
+function createReferenceAnalysisAsset(analysis, novelId, timestamp = Date.now()) {
+  return {
+    id: `reference-analysis-${novelId}-${timestamp}`,
+    group: 'plot-framework',
+    type: 'reference-analysis',
+    name: `原著结构拆解｜${analysis.fileName || 'TXT 参考'}`,
+    desc: referenceAnalysisToMarkdown(analysis)
+  };
+}
+
+function upsertReferenceAnalysisAsset(novel, individualAnalyses = []) {
+  const list = individualAnalyses.length > 0 
+    ? individualAnalyses 
+    : (novel?.referenceNovelAnalysis ? [novel.referenceNovelAnalysis] : []);
+    
+  if (list.length === 0) return;
+  
+  // Filter out previous reference analyses
+  novel.assets = (novel.assets || []).filter(asset => asset.type !== 'reference-analysis');
+  
+  // Add all new ones
+  list.forEach((analysis, idx) => {
+    novel.assets.unshift(createReferenceAnalysisAsset(analysis, novel.id, Date.now() + idx));
+  });
+  
+  if (!novel.categoryOrder) novel.categoryOrder = cloneDefault(DEFAULT_CATEGORY_ORDER);
+  if (!novel.categoryOrder['plot-framework']) novel.categoryOrder['plot-framework'] = [];
+  if (!novel.categoryOrder['plot-framework'].includes('reference-analysis')) {
+    novel.categoryOrder['plot-framework'].unshift('reference-analysis');
+  }
+}
+
+function logReferenceProgress(message, percentVal) {
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  elements.referenceLogContent.appendChild(line);
+  elements.referenceLogContent.scrollTop = elements.referenceLogContent.scrollHeight;
+  
+  elements.referenceProgressBar.style.width = `${percentVal}%`;
+  elements.referenceProgressPercentage.textContent = `${percentVal}%`;
+  elements.referenceProgressStatus.textContent = message;
+}
+
+function mergeReferenceAnalyses(analyses) {
+  if (!analyses || !analyses.length) return null;
+  const allBackgrounds = [];
+  const allSynopses = [];
+  analyses.forEach(analysis => {
+    if (analysis.suggestedBackground) allBackgrounds.push(analysis.suggestedBackground);
+    if (analysis.suggestedSynopsis) allSynopses.push(analysis.suggestedSynopsis);
+  });
+  const tags = [];
+  const seenTags = new Set();
+  allBackgrounds.forEach(bgStr => {
+    bgStr.split(/[，,]/).map(t => t.trim()).filter(Boolean).forEach(tag => {
+      const lower = tag.toLowerCase();
+      if (!seenTags.has(lower)) {
+        seenTags.add(lower);
+        tags.push(tag);
+      }
+    });
+  });
+  let hasGender = tags.some(t => /(男频|女频)/.test(t));
+  let hasWorldType = tags.some(t => NOVEL_WORLD_TYPE_PATTERN.test(t));
+  if (!hasGender) tags.unshift('男频');
+  if (!hasWorldType) tags.splice(1, 0, '架空古代');
+  const defaults = ['系统', '热血', '爽文', '脑洞', '智商在线', '强者崛起', '爆笑', '轻松'];
+  for (let i = 0; tags.length < 8 && i < defaults.length; i++) {
+    const d = defaults[i];
+    if (!seenTags.has(d.toLowerCase())) {
+      tags.push(d);
+      seenTags.add(d.toLowerCase());
+    }
+  }
+  const mergedBackground = tags.join('，');
+  const mergedSynopsis = allSynopses.length === 1 
+    ? allSynopses[0] 
+    : allSynopses.map((syn, idx) => `【原著参考 ${idx + 1} 仿写简介】\n${syn}`).join('\n');
+  return {
+    suggestedBackground: mergedBackground,
+    suggestedSynopsis: mergedSynopsis,
+    fileName: analyses.map(a => a.fileName).join('、'),
+    sourceLength: analyses.reduce((sum, a) => sum + (a.sourceLength || 0), 0),
+    analyzedChunks: analyses.reduce((sum, a) => sum + (a.analyzedChunks || 0), 0)
+  };
+}
+
+async function analyzeMultipleReferenceFiles(files) {
+  elements.referenceProgressModal.classList.remove('hidden');
+  elements.referenceLogContent.innerHTML = '';
+  elements.btnCloseReferenceProgress.disabled = true;
+  elements.btnCloseReferenceProgress.textContent = '分析中...';
+  
+  logReferenceProgress(`开始分析，共 ${files.length} 个原著参考文件...`, 0);
+  
+  const analyses = [];
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileBasePercent = Math.round((i / files.length) * 100);
+      const fileWeight = 100 / files.length;
+      
+      logReferenceProgress(`正在处理 [${i + 1}/${files.length}] 《${file.name}》...`, fileBasePercent);
+      
+      const analysis = await analyzeReferenceNovelFile(file, statusMsg => {
+        const chunkMatch = /片段\s*(\d+)\/(\d+)/.exec(statusMsg);
+        let progressOffset = 10;
+        if (chunkMatch) {
+          const currentChunk = parseInt(chunkMatch[1], 10);
+          const totalChunks = parseInt(chunkMatch[2], 10);
+          progressOffset = 10 + Math.round((currentChunk / totalChunks) * 75);
+        } else if (statusMsg.includes('汇总')) {
+          progressOffset = 85;
+        } else if (statusMsg.includes('保存')) {
+          progressOffset = 95;
+        } else if (statusMsg.includes('检测到')) {
+          progressOffset = 100;
+        }
+        
+        const currentPercent = fileBasePercent + Math.round((progressOffset / 100) * fileWeight);
+        logReferenceProgress(`《${file.name}》: ${statusMsg}`, currentPercent);
+      });
+      
+      analyses.push(analysis);
+      logReferenceProgress(`《${file.name}》分析完成。`, fileBasePercent + Math.round(fileWeight));
+    }
+    
+    logReferenceProgress('所有文件分析完成！', 100);
+    elements.btnCloseReferenceProgress.textContent = '完成并应用';
+    return analyses;
+  } catch (err) {
+    logReferenceProgress(`分析过程中断: ${err.message}`, 100);
+    elements.btnCloseReferenceProgress.textContent = '关闭';
+    throw err;
+  } finally {
+    elements.btnCloseReferenceProgress.disabled = false;
+  }
+}
+
+async function checkReferenceNovelAnalysis(fileName) {
+  try {
+    const response = await fetch(`/api/reference-novels?fileName=${encodeURIComponent(fileName)}`, {
+      headers: {
+        'X-User-Token': localStorage.getItem('novel_session_token') || ''
+      }
+    });
+    if (!response.ok) return null;
+    const res = await response.json();
+    if (res.exists) {
+      return res.data;
+    }
+  } catch (e) {
+    console.error('Failed to check existing reference novel analysis:', e);
+  }
+  return null;
+}
+
+async function saveReferenceNovelAnalysis(fileName, analysis) {
+  try {
+    const response = await fetch(`/api/reference-novels`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Token': localStorage.getItem('novel_session_token') || ''
+      },
+      body: JSON.stringify({ fileName, analysis })
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (e) {
+    console.error('Failed to save reference novel analysis:', e);
+  }
+  return null;
+}
+
+async function analyzeReferenceNovelFile(file, onStatus = () => {}) {
+  if (!file || !/\.txt$/i.test(file.name)) {
+    throw new Error('仅支持上传 .txt 小说原著。');
+  }
+  if (file.size > 30 * 1024 * 1024) {
+    throw new Error('TXT 文件超过 30 MB，请先按卷拆分后上传。');
+  }
+
+  // 1. Check if cached analysis exists in backend
+  onStatus('正在检查是否已有该小说的分析数据...');
+  const existingAnalysis = await checkReferenceNovelAnalysis(file.name);
+  if (existingAnalysis) {
+    onStatus('检测到已存在该小说的拆解分析，直接复用已有数据中...');
+    existingAnalysis.isLoadedFromCache = true;
+    
+    // Ensure fallback is populated in case cached version does not have suggestions
+    if (!existingAnalysis.suggestedBackground) {
+      const isFemale = /(女频|言情|女主|小师妹|团宠)/i.test(existingAnalysis.genreAndAudience || '');
+      const isMale = !isFemale;
+      const worldType = NOVEL_WORLD_TYPE_PATTERN.exec(existingAnalysis.genreAndAudience || existingAnalysis.worldbuildingTechniques?.join(' ') || '')?.[1] || '架空古代';
+      existingAnalysis.suggestedBackground = [
+        isMale ? '男频' : '女频',
+        worldType,
+        '系统', '热血', '爽文', '脑洞', '智商在线', '强者崛起'
+      ].join('，');
+    }
+    if (!existingAnalysis.suggestedSynopsis) {
+      existingAnalysis.suggestedSynopsis = `这是一个在${existingAnalysis.suggestedBackground.split(/[，,]/)[1] || '奇幻世界'}中展开的精彩故事。主角带着坚定的执念，在风云诡谲的世界里步步为营，破解重重迷雾，战胜强大的对手，成就一段传奇。`;
+    }
+    return existingAnalysis;
+  }
+  
+  if (!state.apiKey) {
+    throw new Error('请先在设置中配置并验证 API Key。');
+  }
+  const text = await file.text();
+  if (text.trim().length < 500) {
+    throw new Error('TXT 内容过短，无法进行有效的小说结构拆解。');
+  }
+  const chunks = buildReferenceNovelChunks(text);
+  const chunkReports = [];
+  for (let index = 0; index < chunks.length; index += 1) {
+    const chunk = chunks[index];
+    onStatus(`正在拆解原著片段 ${index + 1}/${chunks.length}（覆盖全文不同位置）...`);
+    const report = await callJsonAgentWithRepair(
+      `你是长篇小说原著拆解 Agent。只返回 JSON：
+{
+  "characters":[{"name":"原著人物名，仅用于本次分析","role":"剧情职能","desire":"欲望","conflict":"冲突","arcStage":"本片段变化"}],
+  "events":[{"cause":"前因","choice":"人物选择","consequence":"后果","function":"结构职能"}],
+  "relationships":["关系及变化"],
+  "clues":[{"seed":"伏笔种子","payoff":"可能回收","technique":"技法"}],
+  "worldRules":["世界规则及限制"],
+  "pacing":["节奏、悬念、情绪变化"],
+  "styleTechniques":["可抽象借鉴的叙事技法"]
+}
+
+只做结构分析，不续写，不摘抄长句。原著人物名只能留在片段报告中，后续不得进入新书。`,
+      `文件：${file.name}
+片段位置：第 ${chunk.index} 段，起始字符 ${chunk.start}
+原著片段：
+${chunk.text}`,
+      onStatus,
+      '原著拆解 Agent'
+    );
+    chunkReports.push(report);
+  }
+  onStatus('正在汇总人物、剧情、因果、伏笔与节奏模式...');
+  const synthesis = await callJsonAgentWithRepair(
+    `你是原著结构总析 Agent。只返回 JSON：
+{
+  "genreAndAudience":"题材、受众、核心情绪承诺",
+  "characterArchetypes":["抽象人物原型、欲望、缺陷、弧光和关系模式，不保留姓名"],
+  "plotArchitecture":["开篇、发展、升级、高潮、结局的结构规律"],
+  "causalPatterns":["可迁移的因果推进模式"],
+  "foreshadowingPatterns":["伏笔埋设、误导、揭示、回收模式"],
+  "pacingModel":["章节钩子、高潮低谷、信息释放规律"],
+  "worldbuildingTechniques":["世界规则、势力、资源与代价的构建技法"],
+  "transferableTechniques":["可用于新书但必须重新设计内容的技法"],
+  "forbiddenCopyElements":["禁止复制的专有名词、标志性表达、人物组合、具体事件 and 原始顺序"]
+}
+
+必须去除原著姓名 and 专有名词，只保留抽象结构。目标是原创、低相似度的新书，不是换名复刻。`,
+    `以下是对原著不同位置的片段报告，请综合去重：
+${compactString(JSON.stringify(chunkReports), 52000)}`,
+    onStatus,
+    '原著总析 Agent'
+  );
+
+  const result = {
+    ...synthesis,
+    fileName: file.name,
+    sourceLength: text.length,
+    analyzedChunks: chunks.length,
+    analyzedAt: new Date().toISOString()
+  };
+
+  // Enforce validation with fallbacks if model output failed to satisfy constraints
+  if (!result.suggestedBackground) {
+    const isFemale = /(女频|言情|女主|小师妹|团宠)/i.test(result.genreAndAudience || '');
+    const isMale = !isFemale;
+    const worldType = NOVEL_WORLD_TYPE_PATTERN.exec(result.genreAndAudience || result.worldbuildingTechniques?.join(' ') || '')?.[1] || '架空古代';
+    result.suggestedBackground = [
+      isMale ? '男频' : '女频',
+      worldType,
+      '系统', '热血', '爽文', '脑洞', '智商在线', '强者崛起'
+    ].join('，');
+  }
+  if (!result.suggestedSynopsis) {
+    result.suggestedSynopsis = `这是一个在${result.suggestedBackground.split(/[，,]/)[1] || '奇幻世界'}中展开的精彩故事。主角带着坚定的执念，在风云诡谲的世界里步步为营，破解重重迷雾，战胜强大的对手，成就一段传奇。`;
+  }
+
+  // 2. Save the new analysis to the backend
+  onStatus('正在保存原著分析数据到本地目录...');
+  const saveResult = await saveReferenceNovelAnalysis(file.name, result);
+  if (saveResult && saveResult.relativePath) {
+    result.savedPath = saveResult.relativePath;
+  }
+
+  return result;
+}
+
+function characterAuditToMarkdown(audit) {
+  if (!audit) return '暂无审计数据。';
+  const list = items => (items || []).map(item => `- ${item}`).join('\n');
+  const issuesList = (audit.issues || []).map(issue => 
+    `- **[${issue.severity || 'unknown'}] ${issue.category || '综合'}**: ${issue.problem || ''}\n  *建议：${issue.repair || '无'}*`
+  ).join('\n');
+  
+  return `# 人物和势力体系审计报告\n\n## 综合评估\n- **最终评分**: ${audit.score || 0} 分\n- **是否通过**: ${audit.passed ? '通过' : '未通过（已人工强制接受）'}\n- **审计总结**: ${audit.summary || '无'}\n\n## 发现的核心问题与优化建议\n${issuesList || '未发现待修复的严重问题。'}\n\n## 优势分析\n${list(audit.strengths) || '暂无优势评估。'}`;
+}
+
+function createCharacterAuditAsset(audit, novelId, timestamp = Date.now()) {
+  return {
+    id: `character-audit-${novelId}-${timestamp}`,
+    group: 'character-growth',
+    type: 'character-audit',
+    name: `人物势力审计报告｜评分：${audit.score || 0}`,
+    desc: characterAuditToMarkdown(audit)
+  };
+}
+
+function upsertCharacterAuditAsset(novel, audit) {
+  if (!novel || !audit) return;
+  novel.characterAudit = audit;
+  novel.assets = (novel.assets || []).filter(asset => asset.type !== 'character-audit');
+  novel.assets.unshift(createCharacterAuditAsset(audit, novel.id));
+  if (!novel.categoryOrder) novel.categoryOrder = cloneDefault(DEFAULT_CATEGORY_ORDER);
+  if (!novel.categoryOrder['character-growth']) novel.categoryOrder['character-growth'] = [];
+  if (!novel.categoryOrder['character-growth'].includes('character-audit')) {
+    novel.categoryOrder['character-growth'].unshift('character-audit');
+  }
+}
+
+function openReferenceManager(files, onConfirm) {
+  if (files && files.length > 0) {
+    const existingNames = new Set(pendingReferenceFiles.map(f => f.name));
+    Array.from(files).forEach(file => {
+      if (!existingNames.has(file.name)) {
+        pendingReferenceFiles.push(file);
+      }
+    });
+  }
+  referenceAnalysisCallback = onConfirm;
+  elements.referenceManagerModal.classList.remove('hidden');
+  renderManagerFileList();
+}
+
+function renderManagerFileList() {
+  if (!elements.referenceFileList) return;
+  elements.referenceFileList.innerHTML = '';
+  
+  if (pendingReferenceFiles.length === 0) {
+    elements.referenceFileList.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">未选择任何原著参考文件。</div>';
+    elements.referenceConfirmCount.textContent = '0';
+    elements.btnConfirmReferenceAnalysis.disabled = true;
+    return;
+  }
+  
+  elements.btnConfirmReferenceAnalysis.disabled = false;
+  elements.referenceConfirmCount.textContent = pendingReferenceFiles.length;
+  
+  pendingReferenceFiles.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'reference-file-item';
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.justifyContent = 'space-between';
+    item.style.padding = '8px 12px';
+    item.style.borderBottom = '1px solid var(--border-color)';
+    item.style.color = 'var(--text-primary)';
+    
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+    
+    item.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">
+        <i data-lucide="file-text" style="color: var(--primary-color); flex-shrink: 0; width: 18px; height: 18px;"></i>
+        <span class="file-name" style="font-weight: 500; font-size: 0.9rem;" title="${file.name}">${file.name}</span>
+        <span class="file-size" style="font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0;">(${sizeInMB} MB)</span>
+      </div>
+      <button type="button" class="btn-delete-file icon-btn" style="color: var(--danger-color); padding: 4px; border-radius: 4px; background: transparent; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center;" data-index="${index}" title="移除此文件">
+        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+      </button>
+    `;
+    elements.referenceFileList.appendChild(item);
+  });
+  
+  // Attach event listener to delete buttons
+  elements.referenceFileList.querySelectorAll('.btn-delete-file').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.getAttribute('data-index'), 10);
+      pendingReferenceFiles.splice(idx, 1);
+      renderManagerFileList();
+    });
+  });
+  
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
 function compactAssetsForContext(assets, task, limit = AGENT_CONTEXT_BUDGET.maxAssets) {
   const terms = String(task || '').split(/[\s，。！？、；：,.!?;:【】（）()\-_]+/).filter(term => term.length >= 2);
   return (assets || [])
@@ -2683,7 +3697,193 @@ function buildRollingWorldState(novel, currentChapterNumber, generatedChapters =
   };
 }
 
+function createSourceSignature(background, synopsis) {
+  const source = `${String(background || '').trim()}\n${String(synopsis || '').trim()}`;
+  let hash = 2166136261;
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `constitution-${(hash >>> 0).toString(16)}`;
+}
+
+function extractExplicitProtagonistNames(synopsis) {
+  const names = new Set();
+  const text = String(synopsis || '');
+  const patterns = [
+    /(?:主角|男主|女主)(?:名为|叫做|叫|是)\s*([\u4e00-\u9fa5]{2,4})/g,
+    /([\u4e00-\u9fa5]{2,4})(?:作为|正是|成为)(?:本书)?(?:主角|男主|女主)/g
+  ];
+  patterns.forEach(pattern => {
+    for (const match of text.matchAll(pattern)) names.add(match[1]);
+  });
+  return [...names];
+}
+
+function deriveStoryConstitution(background, synopsis, narrativeKernel = null) {
+  const backgroundText = String(background || '').trim();
+  const synopsisText = String(synopsis || '').trim();
+  const tags = [...new Set(backgroundText
+    .split(/[，,、；;|\n]+/)
+    .map(tag => tag.trim())
+    .filter(Boolean))];
+  const audience = /(男频|女频)/.exec(backgroundText)?.[1] || inferAudience(backgroundText, synopsisText);
+  const worldTypes = tags.filter(tag => NOVEL_WORLD_TYPE_PATTERN.test(tag));
+  const relationshipMode = /无\s*CP/i.test(backgroundText)
+    ? '无CP'
+    : /后宫/.test(backgroundText)
+      ? '后宫'
+      : /单女主/.test(backgroundText)
+        ? '单女主'
+        : /多女主/.test(backgroundText)
+          ? '多女主'
+          : /言情|甜宠|爱情/.test(backgroundText)
+            ? '感情线重要'
+            : '未明确';
+  const systemMode = /系统/.test(backgroundText)
+    ? '允许系统金手指，但表现形式必须服从既定时代与世界观'
+    : '不得无依据新增系统金手指';
+  const explicitProtagonists = extractExplicitProtagonistNames(synopsisText);
+  const hardConstraints = [
+    audience && `受众定位必须保持为${audience}`,
+    worldTypes.length && `时代/世界类型必须保持为${worldTypes.join('、')}`,
+    relationshipMode !== '未明确' && `感情关系模式必须保持为${relationshipMode}`,
+    tags.length && `用户明确题材标签：${tags.join('、')}`,
+    synopsisText && '简介中的主角、核心前史、关键关系、核心冲突和故事承诺不得被改写为相反事实',
+    systemMode
+  ].filter(Boolean);
+  const prohibitedMutations = [
+    '不得改变男频/女频定位',
+    '不得把时代或世界类型替换成另一套题材世界',
+    '不得改掉简介明确的主角姓名、身份、前史、亲缘、势力和核心目标',
+    '不得把用户明确的无CP、单女主、多女主或后宫模式改成其他关系模式',
+    '不得让后续人物、章节或结局否定已经审核通过的核心事实',
+    '工作区名称只用于界面识别，不得推断为故事内容'
+  ];
+  return {
+    version: 1,
+    sourceSignature: createSourceSignature(backgroundText, synopsisText),
+    audience,
+    backgroundTags: tags,
+    worldTypes,
+    relationshipMode,
+    systemMode,
+    explicitProtagonists,
+    immutableBackground: backgroundText,
+    immutableSynopsis: synopsisText,
+    hardConstraints,
+    prohibitedMutations,
+    creativeFreedom: [
+      '背景和简介未明确的人物、势力、地点、支线与伏笔可以创新',
+      '新增内容必须解释其来源，并与既有事实建立因果连接',
+      '允许反转，但反转只能重新解释既有事实，不能直接否定用户明确事实'
+    ],
+    kernelCommitments: narrativeKernel ? {
+      genre: narrativeKernel.genre || '',
+      protagonist: narrativeKernel.protagonist || '',
+      premise: narrativeKernel.premise || '',
+      coreConflict: narrativeKernel.coreConflict || '',
+      emotionalPromise: narrativeKernel.emotionalPromise || '',
+      endingDirection: narrativeKernel.endingDirection || '',
+      canonTerms: narrativeKernel.canonTerms || [],
+      tabooList: narrativeKernel.tabooList || []
+    } : {}
+  };
+}
+
+function ensureStoryConstitution(novel) {
+  if (!novel) return null;
+  const signature = createSourceSignature(novel.background, novel.synopsis);
+  if (!novel.storyConstitution || novel.storyConstitution.sourceSignature !== signature) {
+    novel.storyConstitution = deriveStoryConstitution(
+      novel.background,
+      novel.synopsis,
+      novel.narrativeKernel
+    );
+  } else if (novel.narrativeKernel) {
+    novel.storyConstitution.kernelCommitments = deriveStoryConstitution(
+      novel.background,
+      novel.synopsis,
+      novel.narrativeKernel
+    ).kernelCommitments;
+  }
+  return novel.storyConstitution;
+}
+
+function storyConstitutionToMarkdown(constitution) {
+  const list = values => (values || []).map(value => `- ${value}`).join('\n') || '- 未明确';
+  return `# 作品宪法
+
+> 本文档由背景设定与作品简介编译而成，是总纲、人物、章节和终审共同遵守的最高事实源。
+
+## 基础定位
+- 受众：${constitution.audience || '未识别'}
+- 世界类型：${constitution.worldTypes?.join('、') || '未明确'}
+- 感情模式：${constitution.relationshipMode || '未明确'}
+- 系统规则：${constitution.systemMode || '未明确'}
+- 明确主角：${constitution.explicitProtagonists?.join('、') || constitution.kernelCommitments?.protagonist || '由总纲确认'}
+
+## 用户背景设定
+${constitution.immutableBackground || '未提供'}
+
+## 用户作品简介
+${constitution.immutableSynopsis || '未提供'}
+
+## 不可变硬约束
+${list(constitution.hardConstraints)}
+
+## 禁止改写
+${list(constitution.prohibitedMutations)}
+
+## 可创新范围
+${list(constitution.creativeFreedom)}
+
+## 已审核叙事承诺
+- 前提：${constitution.kernelCommitments?.premise || '待总纲确认'}
+- 核心冲突：${constitution.kernelCommitments?.coreConflict || '待总纲确认'}
+- 情绪承诺：${constitution.kernelCommitments?.emotionalPromise || '待总纲确认'}
+- 终局方向：${constitution.kernelCommitments?.endingDirection || '待总纲确认'}`;
+}
+
+function upsertStoryConstitutionAsset(novel) {
+  const constitution = ensureStoryConstitution(novel);
+  if (!constitution) return;
+  const existing = (novel.assets || []).find(asset => asset.type === 'story-constitution');
+  const asset = {
+    id: existing?.id || `story-constitution-${novel.id}-${Date.now()}`,
+    group: 'plot-framework',
+    type: 'story-constitution',
+    name: '作品宪法（背景与简介硬约束）',
+    desc: storyConstitutionToMarkdown(constitution)
+  };
+  if (existing) Object.assign(existing, asset);
+  else novel.assets = [asset, ...(novel.assets || [])];
+}
+
+function getConstitutionConsistencyIssues(value, constitution) {
+  if (!constitution) return [];
+  const issues = [];
+  const text = JSON.stringify(value || {});
+  const outputAudience = value?.narrativeKernel?.audience || value?.audience || '';
+  if (constitution.audience && outputAudience && !outputAudience.includes(constitution.audience)) {
+    issues.push(`受众定位漂移：要求${constitution.audience}，结果为${outputAudience}`);
+  }
+  if (constitution.relationshipMode === '无CP' &&
+      /主角.{0,18}(?:相爱|恋爱|结为道侣|成婚|纳妾|后宫)|(?:男主|女主).{0,18}(?:相爱|恋爱|成婚)/.test(text)) {
+    issues.push('感情模式漂移：背景明确无CP，但结果为主角安排了恋爱、婚姻或后宫关系');
+  }
+  if (constitution.relationshipMode === '后宫' &&
+      /(?:无CP|终身不涉情爱|拒绝一切感情线)/i.test(text)) {
+    issues.push('感情模式漂移：背景明确后宫，但结果将作品改成无CP');
+  }
+  constitution.explicitProtagonists.forEach(name => {
+    if (name && !text.includes(name)) issues.push(`主角事实遗漏：简介明确主角“${name}”，结果未保留该姓名`);
+  });
+  return [...new Set(issues)];
+}
+
 function buildRuntimeTaskContext({ novel, task, extra = '', graphLimit = 18 }) {
+  const constitution = ensureStoryConstitution(novel);
   const graphContext = novel
     ? retrieveGraphContext(novel, task, graphLimit)
     : { context: '暂无图谱数据', edges: [] };
@@ -2700,6 +3900,7 @@ function buildRuntimeTaskContext({ novel, task, extra = '', graphLimit = 18 }) {
 小说名称：${novel?.name || '未命名小说'}
 背景设定：${compactString(novel?.background || '未提供', 1800)}
 作品简介：${compactString(novel?.synopsis || '未提供', 2600)}
+作品宪法（最高事实优先级）：${compactString(JSON.stringify(constitution || {}), 5200)}
 已审核总纲：${compactString(JSON.stringify(novel?.masterOutline || {}), 3200)}
 叙事内核：${compactString(JSON.stringify(novel?.narrativeKernel || {}), 1800)}
 事件卡摘要：${compactString(JSON.stringify((novel?.eventCards || []).map(event => ({
@@ -3391,7 +4592,9 @@ ${getNarrativeBlueprintContract()}
 5. 至少生成 6 条 promiseLedger，必须有 seedEventId；重要伏笔必须有 payoffEventId。
 6. stateLedger 必须覆盖每个 eventCard。
 7. 冲突必须来自人物欲望、势力计划、世界压力或前序选择的后果，禁止机械降神。
-8. 目标是百万字长篇可扩展大纲，不是短篇梗概。`,
+8. 目标是百万字长篇可扩展大纲，不是短篇梗概。
+9. 若背景包含“系统”，只能设计修仙世界内的金手指、器灵、面板、神通、任务或奖惩机制，不得把世界写成软件系统；禁止 BUG、代码、程序、格式化、补丁、逻辑解析、降维、集体潜意识、思维牢笼、天道剧本等现代或元叙事隐喻。
+10. ${getNovelStyleConstraint(runtime?.novel || { background })}`,
     `${context}
 小说名称：${name}
 背景设定：${background}
@@ -3445,7 +4648,11 @@ async function compileBlueprintToOutline(name, background, synopsis, task, bluep
   ]
 }
 
-要求：总纲必须由事件卡因果链编译，不得新造与叙事内核冲突的大事件。开始/发展/高潮/结局必须清晰，给用户审核时能看出全书方向。`,
+要求：
+1. 总纲必须由事件卡因果链编译，不得新造与叙事内核冲突的大事件。
+2. 开始/发展/高潮/结局必须清晰。
+3. “系统流”不等于程序世界。系统只能以修仙世界内部机制出现，禁止 BUG、代码、程序、格式化、补丁、逻辑解析、降维、集体潜意识、思维牢笼、天道剧本等表达。
+4. ${getNovelStyleConstraint({ background })}`,
     `小说名称：${name}
 背景设定：${background}
 作品简介：${synopsis || '未提供'}
@@ -3663,6 +4870,17 @@ function applyNarrativeBlueprintResult(novel, result) {
   novel.promiseLedger = Array.isArray(result.promiseLedger) ? result.promiseLedger : [];
   novel.stateLedger = Array.isArray(result.stateLedger) ? result.stateLedger : [];
   novel.outlineAudit = result.outlineAudit || null;
+  novel.storyConstitution = result.storyConstitution || deriveStoryConstitution(
+    novel.background,
+    novel.synopsis,
+    novel.narrativeKernel
+  );
+  novel.consistencyStatus = {
+    needsReaudit: false,
+    reason: '总纲已按当前作品宪法重新生成并通过审核',
+    updatedAt: new Date().toISOString()
+  };
+  upsertStoryConstitutionAsset(novel);
 }
 
 function extendCategoryOrderForNarrativeCompiler(novel) {
@@ -3677,7 +4895,7 @@ function extendCategoryOrderForNarrativeCompiler(novel) {
   });
 }
 
-async function auditMasterOutlineQuality(context, result, onStatus = () => {}) {
+async function auditMasterOutlineQuality(context, result, onStatus = () => {}, styleConstraint = '', constitution = null) {
   onStatus('总纲审核 Agent 正在评估剧情逻辑、创意、悬疑反转和情绪曲线...', '总纲审核 Agent', 82);
   const audit = await callJsonAgentWithRepair(
     `你是长篇小说总纲审核 Agent。只返回 JSON，不要代码围栏：
@@ -3701,7 +4919,11 @@ async function auditMasterOutlineQuality(context, result, onStatus = () => {}) {
 4. 高潮必须能带动整体情绪，不能只堆战力或机械揭露。
 5. 结尾必须意料之外、情理之中，回收主要伏笔并形成主题落点。
 6. 检查是否过于老套、缺少创意、缺少深度、缺少悬疑或反转。
-7. critical/high 问题存在时 passed 必须为 false；score 低于 85 时 passed 必须为 false。`,
+7. critical/high 问题存在时 passed 必须为 false；score 低于 85 时 passed 必须为 false。
+8. 把题材词“系统”与软件工程隐喻严格区分。系统流可以存在，但 BUG、代码、程序、格式化、补丁、逻辑解析、降维、集体潜意识、思维牢笼、天道剧本等现代/元叙事表达必须判为背景偏离。
+9. ${styleConstraint}
+10. 作品宪法是最高事实源。逐项核对受众、世界类型、题材标签、感情模式、简介主角、核心前史、关键关系和故事承诺；不得用“反转”名义否定明确事实。
+作品宪法：${JSON.stringify(constitution || {})}`,
     `${context}
 待审核结果：${JSON.stringify({
       summary: result.summary,
@@ -3739,17 +4961,24 @@ async function auditMasterOutlineQuality(context, result, onStatus = () => {}) {
     severity: String(issue.severity || 'medium').toLowerCase()
   })) : [];
   const score = Math.max(0, Math.min(100, Number(audit.score) || 0));
+  const constitutionIssues = getConstitutionConsistencyIssues(result, constitution).map(problem => ({
+    severity: 'critical',
+    category: '背景偏离',
+    problem,
+    repair: '恢复作品宪法中的明确事实，只改动冲突字段，不得重写用户背景和简介。'
+  }));
+  issues.push(...constitutionIssues);
   const severe = issues.some(issue => ['critical', 'high'].includes(issue.severity));
   return {
-    passed: Boolean(audit.passed) && score >= 85 && !severe,
-    score,
+    passed: Boolean(audit.passed) && score >= 85 && !severe && constitutionIssues.length === 0,
+    score: Math.max(0, score - constitutionIssues.length * 20),
     summary: String(audit.summary || '').trim(),
     issues,
     strengths: Array.isArray(audit.strengths) ? audit.strengths.map(String) : []
   };
 }
 
-async function repairMasterOutlineQuality(context, result, audit, novelId, onStatus = () => {}) {
+async function repairMasterOutlineQuality(context, result, audit, novelId, onStatus = () => {}, styleConstraint = '', constitution = null) {
   onStatus(`总纲未达标（${audit.score} 分），总纲修稿 Agent 正在重写薄弱段落...`, '总纲修稿 Agent', 88);
   const repaired = await callJsonAgentWithRepair(
     `你是长篇小说总纲修稿 Agent。只返回 JSON，不要代码围栏：
@@ -3768,7 +4997,11 @@ async function repairMasterOutlineQuality(context, result, audit, novelId, onSta
 要求：
 1. 不得为了过审硬凑分数；必须真实修复审核指出的逻辑、创意、深度、悬疑、开篇、高潮和结尾问题。
 2. 不得改变背景设定、简介承诺、受众、题材、CP、主角核心前史。
-3. 保持开始、发展、高潮、结局四段完整，增强因果、人物主动性、伏笔回收和意外性。`,
+3. 保持开始、发展、高潮、结局四段完整，增强因果、人物主动性、伏笔回收和意外性。
+4. “系统”必须是修仙世界内的金手指机制，不得使用 BUG、代码、程序、格式化、补丁、逻辑解析、降维、集体潜意识、思维牢笼、天道剧本等现代或故事外隐喻。
+5. ${styleConstraint}
+6. 所有修改必须逐项服从作品宪法。简介明确的主角、前史、关系、势力、核心目标和感情模式不可替换。
+作品宪法：${JSON.stringify(constitution || {})}`,
     `${context}
 审核问题：${JSON.stringify(audit.issues)}
 当前结果：${JSON.stringify({
@@ -3798,16 +5031,35 @@ async function repairMasterOutlineQuality(context, result, audit, novelId, onSta
 }
 
 async function superviseMasterOutlineQuality(name, background, synopsis, task, result, novelId, onStatus = () => {}) {
+  const styleConstraint = getNovelStyleConstraint({ background });
+  const constitution = deriveStoryConstitution(background, synopsis, result.narrativeKernel);
   const context = `小说名称：${name}
 背景设定：${background || '未提供'}
 作品简介：${synopsis || '未提供'}
-用户任务：${task}`;
-  let audit = await auditMasterOutlineQuality(context, result, onStatus);
+用户任务：${task}
+背景风格硬约束：${styleConstraint}`;
+  const initialStyleRepair = enforceOutlineResultStyle(result, background);
+  if (initialStyleRepair.changes.length) {
+    onStatus(
+      `程序世界观守门器已修正 ${initialStyleRepair.changes.length} 处现代/元叙事越界表达，正在交给审核 Agent 复核语义。`,
+      '世界观守门器',
+      80
+    );
+    syncMasterOutlineAsset(result, novelId);
+  }
+  let audit = await auditMasterOutlineQuality(context, result, onStatus, styleConstraint, constitution);
   for (let round = 0; round < 3 && !audit.passed; round += 1) {
-    result = await repairMasterOutlineQuality(context, result, audit, novelId, onStatus);
-    audit = await auditMasterOutlineQuality(context, result, onStatus);
+    result = await repairMasterOutlineQuality(context, result, audit, novelId, onStatus, styleConstraint, constitution);
+    enforceOutlineResultStyle(result, background);
+    syncMasterOutlineAsset(result, novelId);
+    audit = await auditMasterOutlineQuality(context, result, onStatus, styleConstraint, constitution);
+  }
+  const remainingStyleViolations = findPremodernStyleViolations(result);
+  if (remainingStyleViolations.length) {
+    throw new Error(`总纲仍包含不符合${getNovelStylePolicy({ background }).era}世界观的表达：${remainingStyleViolations.slice(0, 8).join('、')}。`);
   }
   result.outlineAudit = audit;
+  result.storyConstitution = deriveStoryConstitution(background, synopsis, result.narrativeKernel);
   const auditSummary = `总纲审核：${audit.score} 分。${audit.summary || ''}`;
   result.summary = result.summary
     ? `${result.summary}\n${auditSummary}`
@@ -3824,8 +5076,16 @@ async function superviseMasterOutlineQuality(name, background, synopsis, task, r
   return result;
 }
 
-async function analyzeNovelSetup(name, background, synopsis, novelId, task = '创建完整的新书初始化设定库', onStatus = () => {}) {
-  const runtimeNovel = { id: novelId, name, background, synopsis, assets: [] };
+async function analyzeNovelSetup(name, background, synopsis, novelId, sourceBookText = '', task = '创建完整的新书初始化设定库', onStatus = () => {}) {
+  let referenceNovelAnalysis = null;
+  if (sourceBookText) {
+    try {
+      referenceNovelAnalysis = JSON.parse(sourceBookText);
+    } catch (e) {
+      referenceNovelAnalysis = { transferableTechniques: [compactString(sourceBookText, 5000)] };
+    }
+  }
+  const runtimeNovel = { id: novelId, name, background, synopsis, referenceNovelAnalysis, assets: [] };
   const runtime = await new AgentRuntime(task, runtimeNovel, onStatus).prepare(['narrative-compiler', 'novel-outline']);
   const result = await createNarrativeCompiledOutline(name, background, synopsis, task, [], novelId, runtime, onStatus);
   return superviseMasterOutlineQuality(name, background, synopsis, task, result, novelId, onStatus);
@@ -3941,6 +5201,44 @@ function normalizeChapterCharacterReferences(novel) {
 }
 
 const PREMODERN_STYLE_REPLACEMENTS = [
+  [/逻辑解析系统/gi, '天机推演系统'],
+  [/逻辑解析/gi, '天机推演'],
+  [/重大\s*(?:BUG|Bug|bug)/g, '重大天道漏洞'],
+  [/\bBUG\b/gi, '天道漏洞'],
+  [/系统漏洞/g, '天道漏洞'],
+  [/底层代码/g, '天地根本法则'],
+  [/世界代码/g, '天地法则'],
+  [/错误代码/g, '失序法则'],
+  [/代码/g, '法则纹路'],
+  [/格式化/g, '涤清重塑'],
+  [/活体补丁/g, '镇界之人'],
+  [/补丁/g, '补天之法'],
+  [/天道剧本/g, '天道定数'],
+  [/命运剧本/g, '命数定轨'],
+  [/集体潜意识(?:的)?固化/g, '众生执念的凝结'],
+  [/集体潜意识/g, '众生共同执念'],
+  [/潜意识/g, '心念深处'],
+  [/思维牢笼/g, '道心桎梏'],
+  [/思维禁锢/g, '心神禁锢'],
+  [/认知牢笼/g, '见知桎梏'],
+  [/\bdebug(?:ger)?\b/gi, '查验法则'],
+  [/调试程序/g, '校验法则'],
+  [/数据库/g, '典籍库'],
+  [/算法/g, '推演之法'],
+  [/软件/g, '术法载体'],
+  [/硬件/g, '法器根基'],
+  [/操作系统/g, '天道运转法则'],
+  [/源码/g, '本源法纹'],
+  [/源代码/g, '本源法纹'],
+  [/编译/g, '推演成形'],
+  [/模块/g, '法门'],
+  [/服务器/g, '阵法中枢'],
+  [/内存/g, '神识承载'],
+  [/底层逻辑/g, '根本法理'],
+  [/世界逻辑/g, '天地法理'],
+  [/现实逻辑/g, '现世法理'],
+  [/降维打击/g, '境界碾压'],
+  [/降维/g, '削境'],
   [/赛博朋克/gi, '机关与符阵'],
   [/科幻/g, '奇术'],
   [/星际/g, '诸域'],
@@ -3988,7 +5286,7 @@ function getNovelStyleConstraint(novel) {
   if (!policy.premodern) {
     return '严格继承背景设定中的时代、社会、技术和世界规则；不得混入其他题材体系，不得出现作者、读者、写作、剧情安排等故事外表达。';
   }
-  return `本书属于${policy.era}。人物认知、称谓、制度、器物、交通、通讯、战争和力量体系必须符合该时代与既定世界观。严格禁止出现赛博朋克、科幻、星际、AI、人工智能、程序、物理宇宙、数据流、锚点、外星人、银河系、宇宙、时间旅行、平行世界、维度、位面、量子、直播、奇点、元宇宙、虚拟现实、数字生命，以及作者、读者、写作、剧情安排等故事外概念。`;
+  return `本书属于${policy.era}。人物认知、称谓、制度、器物、交通、通讯、战争和力量体系必须符合该时代与既定世界观。背景中的“系统”是允许存在的修仙金手指，但必须表现为天道赐福、器灵、面板、神通或因果奖惩，不得写成软件、计算机或程序世界。严格禁止出现赛博朋克、科幻、星际、AI、人工智能、程序、BUG、代码、格式化、补丁、逻辑解析、底层逻辑、降维、物理宇宙、数据流、锚点、外星人、银河系、宇宙、时间旅行、平行世界、维度、位面、量子、直播、奇点、元宇宙、虚拟现实、数字生命、集体潜意识、思维牢笼、天道剧本，以及作者、读者、写作、剧情安排等故事外概念。允许使用修仙语境中的因果、天道、命数、道心、神魂，但必须用世界内语言解释。`;
 }
 
 function replaceStoryStyleTerms(value, replacements, path = '', changes = []) {
@@ -4019,7 +5317,8 @@ function enforceNovelStylePolicy(novel) {
   [
     'synopsis', 'masterOutline', 'analysisSummary', 'narrativeKernel',
     'worldPressure', 'factionPlans', 'eventCards', 'promiseLedger',
-    'stateLedger', 'characterBible', 'characterRelations', 'plotBlueprint'
+    'stateLedger', 'characterBible', 'characterRelations', 'plotBlueprint', 'assets',
+    'finalOutline', 'outlineAudit', 'finalAudit'
   ].forEach(field => {
     novel[field] = replaceStoryStyleTerms(
       novel[field],
@@ -4029,6 +5328,21 @@ function enforceNovelStylePolicy(novel) {
     );
   });
   return { policy, changes };
+}
+
+function enforceOutlineResultStyle(result, background) {
+  const policy = getNovelStylePolicy({ background });
+  if (!policy.premodern) return { policy, changes: [] };
+  const changes = [];
+  replaceStoryStyleTerms(result, PREMODERN_STYLE_REPLACEMENTS, 'outlineResult', changes);
+  return { policy, changes };
+}
+
+function findPremodernStyleViolations(value) {
+  const text = JSON.stringify(value || {});
+  return PREMODERN_STYLE_REPLACEMENTS
+    .filter(([pattern]) => new RegExp(pattern.source, pattern.flags.replace('g', '')).test(text))
+    .map(([pattern]) => pattern.source.replace(/\\b/g, ''));
 }
 
 function autoRepairOrphanCluePayoffs(novel) {
@@ -4078,10 +5392,20 @@ function runStaticFinalNovelAudit(novel) {
   const clueSeeds = new Map();
   const cluePayoffs = new Map();
   const stylePolicy = getNovelStylePolicy(novel);
+  const constitution = ensureStoryConstitution(novel);
 
   if (!novel.masterOutline) blockingIssues.push('缺少已审核全书总纲');
   if (characters.length < 3) blockingIssues.push('人物体系不存在或数量不足');
   if (!chapters.length) blockingIssues.push('章节细纲不存在');
+  getConstitutionConsistencyIssues({
+    narrativeKernel: novel.narrativeKernel,
+    masterOutline: novel.masterOutline,
+    characters,
+    relations,
+    chapters
+  }, constitution).forEach(issue => {
+    blockingIssues.push(`作品宪法冲突：${issue}`);
+  });
   characters.forEach(character => {
     const missing = requiredCharacterFields.filter(field => !String(character[field] || '').trim());
     if (missing.length) repairableIssues.push(`人物“${character.name || '未命名'}”缺少字段：${missing.join('、')}`);
@@ -4134,6 +5458,14 @@ function runStaticFinalNovelAudit(novel) {
     const storyText = JSON.stringify({
       synopsis: novel.synopsis,
       masterOutline: novel.masterOutline,
+      analysisSummary: novel.analysisSummary,
+      narrativeKernel: novel.narrativeKernel,
+      worldPressure: novel.worldPressure,
+      factionPlans: novel.factionPlans,
+      eventCards: novel.eventCards,
+      promiseLedger: novel.promiseLedger,
+      stateLedger: novel.stateLedger,
+      assets: novel.assets,
       characters,
       relations,
       chapters
@@ -4252,6 +5584,9 @@ async function buildFinalNovelAudit(task, onStatus = () => {}, stateManager = nu
   const activeNovel = getActiveNovel();
   if (!activeNovel?.masterOutline || !activeNovel.characterBible?.length || !activeNovel.plotBlueprint?.chapters?.length) {
     throw new Error('全书终审需要已审核总纲、人物体系和章节细纲。');
+  }
+  if (activeNovel.consistencyStatus?.needsReaudit) {
+    throw new Error('背景设定或作品简介已修改，现有总纲、人物和章节需要重新生成或重新审计。');
   }
   const novel = structuredClone(activeNovel);
   const runtime = await new AgentRuntime(task, novel, onStatus).prepare([
@@ -4702,9 +6037,13 @@ function validateAndHealPlotBlueprint(chapters, architecture, characters, chapte
 async function buildPlotSystem(task, onStatus = () => {}, stateManager = null) {
   const novel = getActiveNovel();
   if (!novel?.masterOutline) throw new Error('请先生成并审核全书总纲。');
+  if (novel.consistencyStatus?.needsReaudit) {
+    throw new Error('背景设定或作品简介已修改，旧总纲不再可信。请先重新执行第一步生成总纲。');
+  }
   if (!Array.isArray(novel.characterBible) || novel.characterBible.length < 3) {
     throw new Error('请先完成人物体系构建并审核通过，再设计章节剧情。');
   }
+  const constitution = ensureStoryConstitution(novel);
   const chapterCount = getRequestedPlotChapterCount(task);
   const runtime = await new AgentRuntime(task, novel, onStatus).prepare(['plot-compiler', 'narrative-compiler']);
   const compactCharacters = novel.characterBible.map(character => ({
@@ -4730,7 +6069,9 @@ async function buildPlotSystem(task, onStatus = () => {}, stateManager = null) {
 3. 人物欲望和利益推动事件；不能为了剧情而剧情。
 4. 冲突来自人物选择、势力计划、资源限制或前序后果。
 5. 三幕多线必须在卷级交汇，高潮必须由前置因果赚取。
-6. 时间、空间、信息、资源和关系状态必须可连续追踪。`,
+6. 时间、空间、信息、资源和关系状态必须可连续追踪。
+7. 作品宪法是最高事实源，卷纲不得改变受众、世界类型、感情模式、简介主角、核心前史和故事承诺。
+作品宪法：${JSON.stringify(constitution)}`,
     `${runtime.baseContext}
 人物库：${JSON.stringify(compactCharacters)}
 目标章节数：${chapterCount}
@@ -4765,7 +6106,9 @@ async function buildPlotSystem(task, onStatus = () => {}, stateManager = null) {
 7. 符合常识与时空连续性，禁止突兀转场和机械巧合。
 8. 所有资源和道具必须填写来源与使用代价；新增元素必须填写来源和后续用途。
 9. 每章必须明确知识差和关系变化，避免人物突然知道不该知道的信息或关系无过程跳变。
-10. ${getNovelStyleConstraint(novel)}`,
+10. ${getNovelStyleConstraint(novel)}
+11. 本批章节必须服从作品宪法，不得用新设定覆盖背景或简介中的明确事实。
+作品宪法：${JSON.stringify(constitution)}`,
         `总纲：${JSON.stringify(novel.masterOutline)}
 卷级规划：${JSON.stringify(volume)}
 全局叙事线：${JSON.stringify(architecture.narrativeThreads)}
@@ -4812,7 +6155,9 @@ async function buildPlotSystem(task, onStatus = () => {}, stateManager = null) {
 {"passed":true,"score":0,"summary":"结论","issues":[{"severity":"critical|high|medium|low","category":"因果|人物驱动|伏笔|群像|时间|空间|节奏|高潮|低谷|悬念|常识|突兀发展","problem":"问题","repair":"方案"}],"strengths":["优势"]}
 
 审核重点：人物推动剧情、因果闭环、三幕多线交汇、时空连续、伏笔先埋后收、高潮有铺垫、低谷有代价、严禁天降人物/道具和机械巧合。
-${getNovelStyleConstraint(novel)}`,
+${getNovelStyleConstraint(novel)}
+作品宪法：${JSON.stringify(constitution)}
+任何与作品宪法冲突的内容必须列为 critical。`,
     `总纲：${JSON.stringify(novel.masterOutline)}
 卷级规划：${JSON.stringify(architecture)}
 章节细纲摘要：${JSON.stringify(validation.chapters.map(chapter => ({
@@ -4835,13 +6180,26 @@ ${getNovelStyleConstraint(novel)}`,
     onStatus,
     '剧情审计 Agent'
   );
+  const constitutionIssues = getConstitutionConsistencyIssues({
+    narrativeKernel: novel.narrativeKernel,
+    architecture,
+    chapters: validation.chapters
+  }, constitution);
   const normalizedAudit = {
-    passed: Boolean(audit.passed) && Number(audit.score) >= 85,
-    score: Math.max(0, Math.min(100, Number(audit.score) || 0)),
+    passed: Boolean(audit.passed) && Number(audit.score) >= 85 && constitutionIssues.length === 0,
+    score: Math.max(0, Math.min(100, Number(audit.score) || 0) - constitutionIssues.length * 20),
     summary: String(audit.summary || ''),
-    issues: Array.isArray(audit.issues) ? audit.issues : [],
+    issues: [
+      ...(Array.isArray(audit.issues) ? audit.issues : []),
+      ...constitutionIssues.map(problem => ({
+        severity: 'critical',
+        category: '背景偏离',
+        problem,
+        repair: '恢复作品宪法中的明确事实后重新生成受影响章节。'
+      }))
+    ],
     strengths: Array.isArray(audit.strengths) ? audit.strengths : [],
-    requiresHumanReview: !audit.passed || Number(audit.score) < 85,
+    requiresHumanReview: !audit.passed || Number(audit.score) < 85 || constitutionIssues.length > 0,
     validationIssues: validation.issues
   };
   if (stateManager) {
@@ -4881,6 +6239,17 @@ ${novel.synopsis || ''}`
     edges.push({ source: 'novel-root', target: `group:${group}`, type: 'contains' });
   });
 
+  const constitution = ensureStoryConstitution(novel);
+  if (constitution) {
+    addNode({
+      id: 'constitution:story',
+      kind: 'story-constitution',
+      label: '作品宪法',
+      text: JSON.stringify(constitution)
+    });
+    edges.push({ source: 'novel-root', target: 'constitution:story', type: 'defines' });
+  }
+
   (novel.assets || []).forEach(asset => {
     const id = `asset:${asset.id}`;
     addNode({
@@ -4902,6 +6271,7 @@ ${asset.desc}`,
       text: JSON.stringify(novel.narrativeKernel)
     });
     edges.push({ source: 'novel-root', target: 'kernel:narrative', type: 'defines' });
+    if (constitution) edges.push({ source: 'constitution:story', target: 'kernel:narrative', type: 'constrains' });
   }
 
   (novel.factionPlans || []).forEach(plan => {
@@ -4946,6 +6316,7 @@ ${asset.desc}`,
       event
     });
     edges.push({ source: 'novel-root', target: `event:${event.id}`, type: 'contains-event' });
+    if (constitution) edges.push({ source: 'constitution:story', target: `event:${event.id}`, type: 'constrains' });
     if (novel.narrativeKernel) {
       edges.push({ source: 'kernel:narrative', target: `event:${event.id}`, type: 'constrains' });
     }
@@ -5027,6 +6398,7 @@ ${asset.desc}`,
       chapter
     });
     edges.push({ source: `volume:${chapter.volumeId}`, target: `plot-chapter:${chapter.chapterNumber}`, type: 'contains-chapter' });
+    if (constitution) edges.push({ source: 'constitution:story', target: `plot-chapter:${chapter.chapterNumber}`, type: 'constrains' });
     (chapter.prerequisiteChapterIds || []).forEach(dependencyId => {
       const dependencyNumber = Number(String(dependencyId).match(/\d+/)?.[0]);
       if (dependencyNumber) {
@@ -5067,6 +6439,7 @@ ${asset.desc}`,
       ].join('\n'),
       character
     });
+    if (constitution) edges.push({ source: 'constitution:story', target: `character:${character.name}`, type: 'constrains' });
   });
   (novel.characterRelations || []).forEach(relation => {
     edges.push({
@@ -5172,6 +6545,7 @@ ${node.text || ''}`.toLowerCase();
     'plot-causal-chain': '剧情因果链',
     'plot-timeline': '时空与多线叙事',
     'plot-audit': '剧情审计报告',
+    'story-constitution': '作品宪法',
     'final-outline': '最终综合大纲',
     'final-audit': '全书终审报告',
     'group': '分类组',
@@ -5216,6 +6590,7 @@ async function persistNovelKnowledgeGraph(novel) {
 }
 
 function getCharacterContext(novel, task = '构建人物', canon = null) {
+  const constitution = ensureStoryConstitution(novel);
   const defaultAssetIds = new Set(DEFAULT_ASSETS.map(asset => asset.id));
   const obsoleteTerms = new Set([
     ...(canon?.obsoleteTerms || []),
@@ -5243,6 +6618,8 @@ function getCharacterContext(novel, task = '构建人物', canon = null) {
   return `工作区名称（仅用于界面识别，不是故事事实）：${novel.name}
 背景设定：${novel.background || '未提供'}
 作品简介：${novel.synopsis || '未提供'}
+作品宪法（最高事实优先级）：
+${JSON.stringify(constitution)}
 全书总纲：
 开始：${novel.masterOutline?.beginning || '未提供'}
 发展：${novel.masterOutline?.development || '未提供'}
@@ -5450,6 +6827,14 @@ function runStaticCharacterAudit(characters, relations, targetCount, canon = nul
   const names = characters.map(character => character.name);
   const nameSet = new Set(names);
   const duplicateNames = names.filter((name, index) => names.indexOf(name) !== index);
+  const malformedNames = names.filter(isMalformedCharacterName);
+  const invalidRelationEndpoints = relations
+    .filter(relation =>
+      !nameSet.has(relation.source) ||
+      !nameSet.has(relation.target) ||
+      relation.source === relation.target
+    )
+    .map(relation => `${relation.source} → ${relation.target}`);
   const duplicatedProfiles = [];
   const profileMap = new Map();
   characters.forEach(character => {
@@ -5518,10 +6903,17 @@ function runStaticCharacterAudit(characters, relations, targetCount, canon = nul
       (character.hiddenIdentities?.length > 0 && character.identityRevealStage === '无')
     )
     .map(character => character.name);
+  const constitutionIssues = getConstitutionConsistencyIssues({
+    narrativeKernel: novel?.narrativeKernel,
+    characters,
+    relations
+  }, ensureStoryConstitution(novel));
   return {
     passed:
       characters.length >= targetCount &&
       duplicateNames.length === 0 &&
+      malformedNames.length === 0 &&
+      invalidRelationEndpoints.length === 0 &&
       placeholderNames.length === 0 &&
       isolatedCharacters.length === 0 &&
       missingCoreFields.length === 0 &&
@@ -5531,8 +6923,11 @@ function runStaticCharacterAudit(characters, relations, targetCount, canon = nul
       antagonistIdentityBoundaryIssues.length === 0 &&
       ghostReferences.length === 0 &&
       weakFamilyConflicts.length === 0 &&
+      constitutionIssues.length === 0 &&
       relations.length >= targetCount,
     duplicateNames: [...new Set(duplicateNames)],
+    malformedNames: [...new Set(malformedNames)],
+    invalidRelationEndpoints: [...new Set(invalidRelationEndpoints)],
     placeholderNames,
     isolatedCharacters,
     missingCoreFields,
@@ -5542,6 +6937,7 @@ function runStaticCharacterAudit(characters, relations, targetCount, canon = nul
     antagonistIdentityBoundaryIssues,
     ghostReferences,
     weakFamilyConflicts,
+    constitutionIssues,
     relationCount: relations.length,
     actualCount: characters.length,
     targetCount
@@ -5551,6 +6947,9 @@ function runStaticCharacterAudit(characters, relations, targetCount, canon = nul
 function getHardCharacterAuditIssues(staticAudit) {
   const issues = [];
   if (!staticAudit) return ['静态审计缺失'];
+  (staticAudit.constitutionIssues || []).forEach(issue => {
+    issues.push(`作品宪法冲突：${issue}`);
+  });
   if (staticAudit.actualCount < staticAudit.targetCount) {
     issues.push(`人物数量不足：${staticAudit.actualCount}/${staticAudit.targetCount}`);
   }
@@ -5942,6 +7341,10 @@ async function repairCharacterSystem(context, characters, relations, audit, onSt
 
 function normalizeCharacterData(character, finalRoster, rosterNameSet, requiredFields) {
   character = character && typeof character === 'object' ? character : {};
+  character.name = extractCanonicalCharacterName(
+    character.name,
+    finalRoster.map(item => item.name)
+  );
   const normalized = {};
   
   // 1. Auto-fill required fields with sensible defaults
@@ -7354,6 +8757,9 @@ async function buildCharacterSystem(task, onStatus = () => {}, stateManager = nu
   if (!novel.masterOutline) {
     throw new Error('请先生成并审核通过全书总纲，再构建人物体系。');
   }
+  if (novel.consistencyStatus?.needsReaudit) {
+    throw new Error('背景设定或作品简介已修改，旧总纲不再可信。请先重新执行第一步生成总纲。');
+  }
   const runtime = await new AgentRuntime(task, novel, onStatus).prepare(['character-system']);
   const targetCount = getRequestedCharacterCount(task);
   const canon = await reconcileCharacterCanon(novel, onStatus);
@@ -7703,7 +9109,7 @@ ${getCharacterContext(novel, task, canon)}`, AGENT_CONTEXT_BUDGET.maxPromptChars
 }
 
 function extractBracketValue(text, label, nextLabel = '') {
-  const labelPattern = new RegExp(`${label}\\s*[：:]`);
+  const labelPattern = new RegExp(`${label}\\s*[：:]?\\s*(?=[【\\[])`);
   const labelMatch = labelPattern.exec(text);
   if (!labelMatch) return '';
 
@@ -7715,7 +9121,7 @@ function extractBracketValue(text, label, nextLabel = '') {
   const contentStart = valueStart + openIndex + 1;
   let contentEnd = text.length;
   if (nextLabel) {
-    const nextPattern = new RegExp(`[，,\\s]*${nextLabel}\\s*[：:]`, 'g');
+    const nextPattern = new RegExp(`[，,\\s]*${nextLabel}\\s*[：:]?\\s*(?=[【\\[])`, 'g');
     nextPattern.lastIndex = contentStart;
     const nextMatch = nextPattern.exec(text);
     if (nextMatch) {
@@ -7753,10 +9159,10 @@ function validateNovelBackground(background) {
 }
 
 function parseNovelBriefInput(rawInput) {
-  if (!/背景设定\s*[：:]/.test(rawInput)) {
+  if (!/背景设定\s*[：:]?\s*[【\[]/.test(rawInput)) {
     return null;
   }
-  const hasSynopsis = /简介\s*[：:]/.test(rawInput);
+  const hasSynopsis = /简介\s*[：:]?\s*[【\[]/.test(rawInput);
   const background = extractBracketValue(rawInput, '背景设定', hasSynopsis ? '简介' : '');
   const synopsis = hasSynopsis ? extractBracketValue(rawInput, '简介') : '';
   if (!background) return null;
@@ -7787,6 +9193,8 @@ function resetDerivedNovelData(novel) {
   novel.characterAudit = null;
   novel.characterRosterDraft = null;
   novel.knowledgeGraph = null;
+  novel.storyConstitution = null;
+  novel.consistencyStatus = null;
   if (novel.activeTarget?.type === 'asset') {
     novel.activeTarget = { type: 'chapter', id: novel.currentChapterId };
   }
@@ -7799,49 +9207,6 @@ function sanitizeDownloadFilename(value) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 60) || '未命名小说';
-}
-
-function buildNovelBriefMarkdown(activeNovel, parsedBrief, rawInput) {
-  return `# ${activeNovel.name || '未命名小说'}：原始设定输入
-
-- 保存时间：${new Date().toISOString()}
-- 受众识别：${parsedBrief.audience || '未识别'}
-
-## 背景设定
-
-${parsedBrief.background}
-
-## 作品简介
-
-${parsedBrief.synopsis || '未提供'}
-
-## 用户原始输入
-
-\`\`\`text
-${rawInput}
-\`\`\`
-`;
-}
-
-function downloadNovelBriefFile(activeNovel, parsedBrief, rawInput) {
-  const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '').replace('T', '-');
-  const filename = `${timestamp}-${sanitizeDownloadFilename(activeNovel.name)}.md`;
-  const blob = new Blob([buildNovelBriefMarkdown(activeNovel, parsedBrief, rawInput)], {
-    type: 'text/markdown;charset=utf-8'
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  return {
-    filename,
-    relativePath: `浏览器下载/${filename}`,
-    fallback: true
-  };
 }
 
 async function saveNovelBriefFile(activeNovel, parsedBrief, rawInput) {
@@ -7873,9 +9238,13 @@ async function saveNovelBriefFile(activeNovel, parsedBrief, rawInput) {
     }
   }
 
-  const fallbackFile = downloadNovelBriefFile(activeNovel, parsedBrief, rawInput);
-  fallbackFile.saveWarning = lastError?.message || '保存接口不可用';
-  return fallbackFile;
+  return {
+    filename: '',
+    relativePath: '',
+    fallback: true,
+    saved: false,
+    saveWarning: lastError?.message || '保存接口不可用'
+  };
 }
 
 function reviewMasterOutline(result) {
@@ -7975,8 +9344,10 @@ function classifyCharacterType(character) {
 }
 
 function extractMarkdownField(markdown, label) {
-  const match = String(markdown || '').match(new RegExp(`- \\*\\*${label}\\*\\*：([^\
-]+)`));
+  const escapedLabel = String(label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(markdown || '').match(
+    new RegExp(`^-\\s*\\*\\*${escapedLabel}\\*\\*[：:]\\s*([^\\r\\n]*)`, 'm')
+  );
   return match ? match[1].trim() : '';
 }
 
@@ -8048,6 +9419,7 @@ function removeCharacterFromNovel(novel, characterName) {
 }
 
 function characterToAsset(character, novelId, index) {
+  ensureCompleteCharacterProfile(character);
   const relationships = (character.relationships || []).map(relation =>
     `- **${relation.target}｜${relation.type}**：${relation.dynamic}；冲突：${relation.conflict}`
   ).join('\n') || '暂无直接关系';
@@ -8388,13 +9760,261 @@ function initEvents() {
     );
   };
   document.querySelectorAll('.workflow-step').forEach(step => {
-    step.addEventListener('click', () => fillTaskFromWorkflowStep(step));
+    step.addEventListener('click', event => {
+      if (event.target.closest('[data-no-step-fill]')) return;
+      fillTaskFromWorkflowStep(step);
+    });
     step.addEventListener('keydown', event => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       fillTaskFromWorkflowStep(step);
     });
   });
+
+  document.querySelectorAll('[data-no-step-fill]').forEach(el => {
+    el.addEventListener('click', event => {
+      event.stopPropagation();
+    });
+    el.addEventListener('keydown', event => {
+      event.stopPropagation();
+    });
+  });
+
+  if (elements.referenceNovelFile) {
+    elements.referenceNovelFile.addEventListener('change', event => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      
+      openReferenceManager(files, async () => {
+        const container = elements.referenceNovelFile.closest('.reference-upload');
+        container?.classList.remove('is-ready', 'is-error');
+        container?.classList.add('is-working');
+        elements.referenceNovelFile.disabled = true;
+        try {
+          const filesToAnalyze = [...pendingReferenceFiles];
+          const analyses = await analyzeMultipleReferenceFiles(filesToAnalyze);
+          const mergedAnalysis = mergeReferenceAnalyses(analyses);
+          const novel = getActiveNovel();
+          if (novel && mergedAnalysis) {
+            novel.background = mergedAnalysis.suggestedBackground || '';
+            novel.synopsis = mergedAnalysis.suggestedSynopsis || '';
+            novel.referenceNovelAnalysis = mergedAnalysis;
+            upsertReferenceAnalysisAsset(novel, analyses);
+            refreshNovelKnowledgeGraph(novel);
+            saveState();
+            void persistNovelKnowledgeGraph(novel);
+            renderNovels();
+            openNovelInfoModal(novel, 'file-upload');
+          }
+          
+          if (mergedAnalysis) {
+            elements.referenceNovelStatus.textContent = 
+              `已拆解 ${filesToAnalyze.length} 个文件：共 ${mergedAnalysis.sourceLength} 字。点击查看或管理。`;
+            elements.referenceNovelStatus.style.cursor = 'pointer';
+            elements.referenceNovelStatus.style.textDecoration = 'underline';
+            container?.classList.add('is-ready');
+            
+            const username = localStorage.getItem('novel_username') || 'default';
+            showToast(`所有原著拆解完成，分析数据已保存至：\n${analyses.map(a => a.savedPath || `data/users/${username}/reference-novels/${a.fileName.replace(/\.txt$/i, '') + '.json'}`).join('\n')}`, 'success');
+          }
+        } catch (error) {
+          elements.referenceNovelStatus.textContent = `分析失败：${error.message}`;
+          container?.classList.add('is-error');
+          showToast(`原著分析失败：${error.message}`, 'error');
+        } finally {
+          container?.classList.remove('is-working');
+          elements.referenceNovelFile.disabled = false;
+        }
+      });
+      elements.referenceNovelFile.value = '';
+    });
+  }
+
+  if (elements.referenceNovelStatus) {
+    elements.referenceNovelStatus.addEventListener('click', event => {
+      event.stopPropagation();
+      if (pendingReferenceFiles.length > 0) {
+        openReferenceManager([], async () => {
+          const container = elements.referenceNovelFile.closest('.reference-upload');
+          container?.classList.remove('is-ready', 'is-error');
+          container?.classList.add('is-working');
+          elements.referenceNovelFile.disabled = true;
+          try {
+            const filesToAnalyze = [...pendingReferenceFiles];
+            const analyses = await analyzeMultipleReferenceFiles(filesToAnalyze);
+            const mergedAnalysis = mergeReferenceAnalyses(analyses);
+            const novel = getActiveNovel();
+            if (novel && mergedAnalysis) {
+              novel.background = mergedAnalysis.suggestedBackground || '';
+              novel.synopsis = mergedAnalysis.suggestedSynopsis || '';
+              novel.referenceNovelAnalysis = mergedAnalysis;
+              upsertReferenceAnalysisAsset(novel, analyses);
+              refreshNovelKnowledgeGraph(novel);
+              saveState();
+              void persistNovelKnowledgeGraph(novel);
+              renderNovels();
+              openNovelInfoModal(novel, 'file-upload');
+            }
+            
+            if (mergedAnalysis) {
+              elements.referenceNovelStatus.textContent = 
+                `已拆解 ${filesToAnalyze.length} 个文件：共 ${mergedAnalysis.sourceLength} 字。点击查看或管理。`;
+              container?.classList.add('is-ready');
+              
+              const username = localStorage.getItem('novel_username') || 'default';
+              showToast(`所有原著拆解完成，分析数据已保存至：\n${analyses.map(a => a.savedPath || `data/users/${username}/reference-novels/${a.fileName.replace(/\.txt$/i, '') + '.json'}`).join('\n')}`, 'success');
+            }
+          } catch (error) {
+            elements.referenceNovelStatus.textContent = `分析失败：${error.message}`;
+            container?.classList.add('is-error');
+            showToast(`原著分析失败：${error.message}`, 'error');
+          } finally {
+            container?.classList.remove('is-working');
+            elements.referenceNovelFile.disabled = false;
+          }
+        });
+      }
+    });
+  }
+
+  if (elements.newNovelFile) {
+    elements.newNovelFile.addEventListener('change', event => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      
+      openReferenceManager(files, async () => {
+        elements.newNovelError.classList.add('hidden');
+        elements.newNovelProgress.classList.remove('hidden');
+        elements.newNovelProgressText.textContent = '正在分段拆解原著人物、剧情、逻辑、伏笔和节奏...';
+        elements.newNovelFile.disabled = true;
+        elements.createNewNovelBtn.disabled = true;
+        elements.closeNewNovelModal.disabled = true;
+        elements.btnCancelNewNovel.disabled = true;
+        
+        try {
+          const filesToAnalyze = [...pendingReferenceFiles];
+          const analyses = await analyzeMultipleReferenceFiles(filesToAnalyze);
+          const mergedAnalysis = mergeReferenceAnalyses(analyses);
+          pendingNewNovelAnalyses = analyses;
+          
+          if (mergedAnalysis) {
+            elements.newNovelBackground.value = mergedAnalysis.suggestedBackground || '';
+            elements.newNovelSynopsis.value = mergedAnalysis.suggestedSynopsis || '';
+            
+            const username = localStorage.getItem('novel_username') || 'default';
+            showToast(`所有原著分析完成，已保存至：\n${analyses.map(a => a.savedPath || `data/users/${username}/reference-novels/${a.fileName.replace(/\.txt$/i, '') + '.json'}`).join('\n')}`, 'success');
+            
+            elements.newNovelProgressText.textContent = '已自动填入背景设定与简介。';
+            elements.newNovelReferenceStatus.textContent = `已选择 ${filesToAnalyze.length} 个文件：共 ${mergedAnalysis.sourceLength} 字。点击查看或管理。`;
+            elements.newNovelReferenceStatus.style.display = 'block';
+          }
+        } catch (error) {
+          showNewNovelError(`分析失败：${error.message}`);
+          elements.newNovelProgressText.textContent = `分析失败：${error.message}`;
+          showToast(`分析失败：${error.message}`, 'error');
+        } finally {
+          elements.newNovelProgress.classList.add('hidden');
+          elements.newNovelFile.disabled = false;
+          elements.createNewNovelBtn.disabled = false;
+          elements.closeNewNovelModal.disabled = false;
+          elements.btnCancelNewNovel.disabled = false;
+        }
+      });
+      
+      elements.newNovelFile.value = '';
+    });
+  }
+
+  if (elements.newNovelReferenceStatus) {
+    elements.newNovelReferenceStatus.addEventListener('click', event => {
+      event.stopPropagation();
+      if (pendingReferenceFiles.length > 0) {
+        openReferenceManager([], async () => {
+          elements.newNovelError.classList.add('hidden');
+          elements.newNovelProgress.classList.remove('hidden');
+          elements.newNovelProgressText.textContent = '正在分段拆解原著人物、剧情、逻辑、伏笔和节奏...';
+          elements.newNovelFile.disabled = true;
+          elements.createNewNovelBtn.disabled = true;
+          elements.closeNewNovelModal.disabled = true;
+          elements.btnCancelNewNovel.disabled = true;
+          
+          try {
+            const filesToAnalyze = [...pendingReferenceFiles];
+            const analyses = await analyzeMultipleReferenceFiles(filesToAnalyze);
+            const mergedAnalysis = mergeReferenceAnalyses(analyses);
+            pendingNewNovelAnalyses = analyses;
+            
+            if (mergedAnalysis) {
+              elements.newNovelBackground.value = mergedAnalysis.suggestedBackground || '';
+              elements.newNovelSynopsis.value = mergedAnalysis.suggestedSynopsis || '';
+              
+              const username = localStorage.getItem('novel_username') || 'default';
+              showToast(`所有原著分析完成，已保存至：\n${analyses.map(a => a.savedPath || `data/users/${username}/reference-novels/${a.fileName.replace(/\.txt$/i, '') + '.json'}`).join('\n')}`, 'success');
+              
+              elements.newNovelProgressText.textContent = '已自动填入背景设定与简介。';
+              elements.newNovelReferenceStatus.textContent = `已选择 ${filesToAnalyze.length} 个文件：共 ${mergedAnalysis.sourceLength} 字。点击查看或管理。`;
+            }
+          } catch (error) {
+            showNewNovelError(`分析失败：${error.message}`);
+            elements.newNovelProgressText.textContent = `分析失败：${error.message}`;
+            showToast(`分析失败：${error.message}`, 'error');
+          } finally {
+            elements.newNovelProgress.classList.add('hidden');
+            elements.newNovelFile.disabled = false;
+            elements.createNewNovelBtn.disabled = false;
+            elements.closeNewNovelModal.disabled = false;
+            elements.btnCancelNewNovel.disabled = false;
+          }
+        });
+      }
+    });
+  }
+
+  // File Manager Modal events
+  if (elements.btnManagerAddFile) {
+    elements.btnManagerAddFile.addEventListener('click', () => {
+      elements.managerAddFileInput.click();
+    });
+  }
+
+  if (elements.managerAddFileInput) {
+    elements.managerAddFileInput.addEventListener('change', event => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+      
+      const existingNames = new Set(pendingReferenceFiles.map(f => f.name));
+      Array.from(files).forEach(file => {
+        if (!existingNames.has(file.name)) {
+          pendingReferenceFiles.push(file);
+        }
+      });
+      
+      renderManagerFileList();
+      elements.managerAddFileInput.value = '';
+    });
+  }
+
+  if (elements.btnCancelReferenceManager) {
+    elements.btnCancelReferenceManager.addEventListener('click', () => {
+      elements.referenceManagerModal.classList.add('hidden');
+    });
+  }
+
+  if (elements.btnConfirmReferenceAnalysis) {
+    elements.btnConfirmReferenceAnalysis.addEventListener('click', () => {
+      elements.referenceManagerModal.classList.add('hidden');
+      if (typeof referenceAnalysisCallback === 'function') {
+        referenceAnalysisCallback();
+      }
+    });
+  }
+
+  // Progress Modal close button handler
+  if (elements.btnCloseReferenceProgress) {
+    elements.btnCloseReferenceProgress.addEventListener('click', () => {
+      elements.referenceProgressModal.classList.add('hidden');
+    });
+  }
 
   const closeGraphEditor = () => elements.graphEditModal.classList.add('hidden');
   elements.closeGraphEditModal.addEventListener('click', closeGraphEditor);
@@ -8416,15 +10036,31 @@ function initEvents() {
       updateCharacterGlobally(novel, elements.graphCharacterOriginalName.value, {
         name: elements.graphCharacterName.value.trim(),
         identity: elements.graphCharacterIdentity.value.trim(),
-        publicIdentity: elements.graphCharacterIdentity.value.trim(),
+        publicIdentity: elements.graphCharacterPublicIdentity.value.trim(),
+        hiddenIdentities: elements.graphCharacterHiddenIdentities.value
+          .split(/[、；;,]/)
+          .map(value => value.trim())
+          .filter(Boolean),
+        identityRevealStage: elements.graphCharacterIdentityRevealStage.value.trim(),
         faction: elements.graphCharacterFaction.value.trim(),
+        factionScope: elements.graphCharacterFactionScope.value.trim(),
+        storyFunction: elements.graphCharacterStoryFunction.value.trim(),
+        ageAndAppearance: elements.graphCharacterAgeAppearance.value.trim(),
         personality: elements.graphCharacterPersonality.value.trim(),
+        lifeHistory: elements.graphCharacterLifeHistory.value.trim(),
+        growthHistory: elements.graphCharacterGrowthHistory.value.trim(),
         desire: elements.graphCharacterDesire.value.trim(),
         goal: elements.graphCharacterGoal.value.trim(),
         interests: elements.graphCharacterInterests.value.trim(),
+        agency: elements.graphCharacterAgency.value.trim(),
+        ability: elements.graphCharacterAbility.value.trim(),
+        weakness: elements.graphCharacterWeakness.value.trim(),
         arc: elements.graphCharacterArc.value.trim(),
         highlight: elements.graphCharacterHighlight.value.trim(),
-        fate: elements.graphCharacterFate.value.trim()
+        fate: elements.graphCharacterFate.value.trim(),
+        plotAnchor: elements.graphCharacterPlotAnchor.value.trim(),
+        settingBasis: elements.graphCharacterSettingBasis.value.trim(),
+        foreshadowLink: elements.graphCharacterForeshadowLink.value.trim()
       });
       closeGraphEditor();
       showToast('人物已修改，并同步到关系、章节细纲和知识图谱。', 'success');
@@ -8465,6 +10101,7 @@ function initEvents() {
   elements.cancelNovelInfo.addEventListener('click', closeNovelInfoModal);
   elements.novelInfoForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    const openedFrom = novelInfoModalOpenedFrom;
     const novel = state.novels.find(item => item.id === elements.novelInfoId.value);
     if (!novel) return;
     const name = elements.novelInfoName.value.trim();
@@ -8474,15 +10111,39 @@ function initEvents() {
       showToast('小说名称和背景设定不能为空。', 'error');
       return;
     }
+    const sourceChanged = novel.background !== background || novel.synopsis !== synopsis;
     novel.name = name;
     novel.background = background;
     novel.synopsis = synopsis;
+    novel.storyConstitution = deriveStoryConstitution(background, synopsis, novel.narrativeKernel);
+    if (sourceChanged) {
+      novel.consistencyStatus = {
+        needsReaudit: Boolean(novel.masterOutline || novel.characterBible?.length || novel.plotBlueprint?.chapters?.length),
+        reason: '背景设定或作品简介已修改',
+        updatedAt: new Date().toISOString()
+      };
+    }
+    upsertStoryConstitutionAsset(novel);
     refreshNovelKnowledgeGraph(novel);
     saveState();
     void persistNovelKnowledgeGraph(novel);
     renderNovels();
+
+    if (openedFrom === 'file-upload') {
+      const formattedText = `背景设定【${background}】，简介：【${synopsis}】`;
+      if (elements.agentTaskTextarea) {
+        elements.agentTaskTextarea.value = formattedText;
+        elements.agentTaskTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+        elements.agentTaskTextarea.focus();
+        elements.agentTaskTextarea.setSelectionRange(formattedText.length, formattedText.length);
+      }
+      showToast('背景设定与简介已保存并填入任务输入框，可以直接点击“开始执行”。', 'success');
+    } else {
+      showToast(sourceChanged && novel.consistencyStatus?.needsReaudit
+        ? '背景或简介已修改，作品宪法已更新。请重新执行第一步生成总纲。'
+        : '小说信息已保存，知识图谱上下文已更新。', sourceChanged ? 'info' : 'success');
+    }
     closeNovelInfoModal();
-    showToast('小说信息已保存，知识图谱上下文已更新。', 'success');
   });
 
   elements.graphResetView.addEventListener('click', () => {
@@ -8535,12 +10196,17 @@ function initEvents() {
           ? `${explicitAudience}，${parsedBrief.background}`
           : parsedBrief.background;
         activeNovel.synopsis = parsedBrief.synopsis;
-        activeNovel.sourceBriefFile = savedFile.relativePath;
+        activeNovel.storyConstitution = deriveStoryConstitution(
+          activeNovel.background,
+          activeNovel.synopsis
+        );
+        upsertStoryConstitutionAsset(activeNovel);
+        activeNovel.sourceBriefFile = savedFile.relativePath || '';
         refreshNovelKnowledgeGraph(activeNovel);
         saveState();
         void persistNovelKnowledgeGraph(activeNovel);
         if (savedFile.fallback) {
-          showToast(`保存接口不可用，已下载创建 ${savedFile.filename}，AI 任务继续执行。`, 'info');
+          showToast('独立文件保存接口暂不可用，内容已保存在当前项目中，AI 任务继续执行。', 'info');
         } else {
           showToast(`背景设定与简介已保存至 ${savedFile.relativePath}`, 'success');
         }
@@ -8738,6 +10404,9 @@ function initEvents() {
               activeNovel.categoryOrder = {};
             }
             activeNovel.categoryOrder['character-growth'] = [...CHARACTER_TYPE_ORDER];
+            if (characterResult.audit) {
+              upsertCharacterAuditAsset(activeNovel, characterResult.audit);
+            }
             if (activeNovel.activeTarget.type === 'asset') {
               activeNovel.activeTarget = { type: 'chapter', id: activeNovel.currentChapterId };
             }
@@ -8784,15 +10453,20 @@ function initEvents() {
             showToast('总纲已退回，现有设定库未被覆盖。', 'info');
             return;
           }
-          const existingCharacterAssets = activeNovel.assets.filter(asset =>
-            asset.characterName || asset.type === 'character-network'
+          const derivedOutlineTypes = new Set([
+            'main-outline', 'volume-outline', 'chapter-outline', 
+            'plot-causal-chain', 'plot-timeline', 'plot-audit', 
+            'final-outline', 'final-audit'
+          ]);
+          const preservedAssets = activeNovel.assets.filter(asset =>
+            !derivedOutlineTypes.has(asset.type)
           );
           const generatedAssets = activeNovel.characterBible?.length
             ? result.assets.filter(asset => !CHARACTER_TYPE_ORDER.includes(asset.type))
             : result.assets;
           activeNovel.assets = [
             ...generatedAssets,
-            ...existingCharacterAssets
+            ...preservedAssets
           ];
           applyNarrativeBlueprintResult(activeNovel, result);
           consolidatePromiseLedgerAssets(activeNovel);
@@ -8890,44 +10564,40 @@ function initEvents() {
       const savedFile = await saveNovelBriefFile(tempNovel, parsedBrief, `背景设定：【${background}】
 简介：【${synopsis}】`);
       if (savedFile.fallback) {
-        showToast(`保存接口不可用，已下载创建 ${savedFile.filename}`, 'info');
+        showToast('独立文件保存接口暂不可用，内容将保存在新建小说项目中，不会下载文件。', 'info');
       } else {
         showToast(`背景设定与简介已保存至 ${savedFile.relativePath}`, 'success');
       }
 
-      elements.newNovelProgressText.textContent = synopsis
-        ? '四个专业 Agent 正在结合背景与简介并行分析，随后由总编整合...'
-        : '四个专业 Agent 正在根据背景设定并行分析，随后由总编整合...';
+      elements.newNovelProgressText.textContent = pendingNewNovelAnalyses && pendingNewNovelAnalyses.length > 0
+        ? '正在根据原著参考深度拆解人物、情节、伏笔并仿写生成总纲...'
+        : (synopsis
+            ? '四个专业 Agent 正在结合背景与简介并行分析，随后由总编整合...'
+            : '四个专业 Agent 正在根据背景设定并行分析，随后由总编整合...');
 
       const analysis = await analyzeNovelSetup(
         name,
         background,
         synopsis,
         newNovelId,
+        pendingNewNovelAnalyses && pendingNewNovelAnalyses.length > 0 ? JSON.stringify(pendingNewNovelAnalyses) : '',
         '创建完整的新书初始化设定库',
         (status, agentName = '总控 Agent') => {
           elements.newNovelProgressText.textContent = `${agentName}：${status}`;
         }
       );
-      elements.newNovelProgressText.textContent = '总纲已生成，等待用户审核...';
+      elements.newNovelProgressText.textContent = '总纲已通过 AI 审核，正在自动写入设定库...';
       delete heartbeatState.lastFailure;
       delete heartbeatState.lastFailureAt;
-      heartbeatState.pendingReview = '新书总纲';
-      saveHeartbeatState();
-      const approved = await reviewMasterOutline(analysis);
       delete heartbeatState.pendingReview;
       saveHeartbeatState();
-      if (!approved) {
-        showNewNovelError('总纲已退回，本次没有创建小说。你可以调整背景设定或简介后重新分析。');
-        return;
-      }
       const chapterTitle = `第一章：${analysis.firstChapterTitle.replace(/^第[一1]章[：:\s]*/, '')}`;
       const newNovel = {
         id: newNovelId,
         name,
         background,
         synopsis,
-        sourceBriefFile: savedFile.relativePath,
+        sourceBriefFile: savedFile.relativePath || '',
         analysisSummary: analysis.summary,
         masterOutline: analysis.masterOutline,
         narrativeKernel: analysis.narrativeKernel || null,
@@ -8937,6 +10607,17 @@ function initEvents() {
         promiseLedger: Array.isArray(analysis.promiseLedger) ? analysis.promiseLedger : [],
         stateLedger: Array.isArray(analysis.stateLedger) ? analysis.stateLedger : [],
         outlineAudit: analysis.outlineAudit || null,
+        storyConstitution: analysis.storyConstitution || deriveStoryConstitution(
+          background,
+          synopsis,
+          analysis.narrativeKernel
+        ),
+        consistencyStatus: {
+          needsReaudit: false,
+          reason: '新书已按作品宪法生成并通过总纲审核',
+          updatedAt: new Date().toISOString()
+        },
+        referenceNovelAnalysis: pendingNewNovelAnalyses && pendingNewNovelAnalyses.length > 0 ? mergeReferenceAnalyses(pendingNewNovelAnalyses) : null,
         chapters: [
           {
             id: 'chapter-1',
@@ -8953,6 +10634,17 @@ function initEvents() {
         activeTarget: { type: 'chapter', id: 'chapter-1' },
         categoryOrder: cloneDefault(DEFAULT_CATEGORY_ORDER)
       };
+      if (pendingNewNovelAnalyses && pendingNewNovelAnalyses.length > 0) {
+        upsertReferenceAnalysisAsset(newNovel, pendingNewNovelAnalyses);
+      }
+      upsertStoryConstitutionAsset(newNovel);
+      const masterOutlineAsset = newNovel.assets.find(asset =>
+        asset.type === 'main-outline' &&
+        (asset.name.includes('全书总纲') || asset.name.includes('开始-发展-高潮-结局'))
+      ) || newNovel.assets.find(asset => asset.type === 'main-outline');
+      if (masterOutlineAsset) {
+        newNovel.activeTarget = { type: 'asset', id: masterOutlineAsset.id };
+      }
       refreshNovelKnowledgeGraph(newNovel);
 
       state.novels.push(newNovel);
@@ -8964,11 +10656,13 @@ function initEvents() {
       saveState();
       void persistNovelKnowledgeGraph(newNovel);
       renderChapters();
-      switchEditorTarget('chapter', 'chapter-1');
       renderNovels();
       elements.newNovelModal.classList.add('hidden');
       elements.newNovelForm.reset();
-      showToast(`《${name}》已创建，设定库已自动填充。`, 'success');
+      switchEditorTarget(newNovel.activeTarget.type, newNovel.activeTarget.id);
+      pendingNewNovelAnalyses = [];
+      pendingReferenceFiles = [];
+      showToast(`《${name}》已创建。AI 已完成分析、审核和设定库填充，请自行查阅总纲。`, 'success');
     } catch (error) {
       heartbeatState.lastFailure = compactString(error.message, 400);
       heartbeatState.lastFailureAt = new Date().toISOString();
@@ -9129,11 +10823,16 @@ function initEvents() {
 
       if (!apiKey) {
         // Save mock mode settings directly
-        state.apiKey = '';
-        state.apiModel = apiModel;
-        state.apiUrl = apiUrl;
+        const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+        if (activeSlot) {
+          activeSlot.apiKey = '';
+          activeSlot.apiModel = apiModel;
+          activeSlot.apiUrl = apiUrl;
+        }
+        syncActiveApiKeyFromSlots();
         saveState();
         closeSettingsModal();
+        renderTaskApiSwitch();
         showToast('已切换到模拟模式，设置已保存。', 'info');
         return;
       }
@@ -9167,19 +10866,29 @@ function initEvents() {
           throw new Error('结构化 JSON 生成测试返回了非预期内容。');
         }
 
-        state.apiKey = apiKey;
-        state.apiModel = apiModel;
-        state.apiUrl = apiUrl;
+        const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+        if (activeSlot) {
+          activeSlot.apiKey = apiKey;
+          activeSlot.apiModel = apiModel;
+          activeSlot.apiUrl = apiUrl;
+        }
+        syncActiveApiKeyFromSlots();
         saveState();
         closeSettingsModal();
+        renderTaskApiSwitch();
         showToast('设置已保存：文本生成与结构化 JSON 测试均通过。', 'success');
       } catch (err) {
         if (err.transient && err.status >= 500) {
-          state.apiKey = apiKey;
-          state.apiModel = apiModel;
-          state.apiUrl = apiUrl;
+          const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+          if (activeSlot) {
+            activeSlot.apiKey = apiKey;
+            activeSlot.apiModel = apiModel;
+            activeSlot.apiUrl = apiUrl;
+          }
+          syncActiveApiKeyFromSlots();
           saveState();
           closeSettingsModal();
+          renderTaskApiSwitch();
           showToast(`配置已保存，但模型服务当前繁忙（HTTP ${err.status}），执行任务时会自动重试。`, 'info');
           return;
         }
@@ -9202,6 +10911,41 @@ function initEvents() {
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
+      }
+    });
+  }
+
+  if (elements.slotNameInput) {
+    elements.slotNameInput.addEventListener('input', (e) => {
+      const activeSlot = state.apiKeys.find(s => s.id === state.activeApiKeyId);
+      if (activeSlot) {
+        activeSlot.name = e.target.value;
+        const activeBtn = elements.settingsSlotsContainer.querySelector('.slot-btn.active span');
+        if (activeBtn) {
+          activeBtn.textContent = activeSlot.name;
+        }
+        renderTaskApiSwitch();
+      }
+    });
+  }
+
+  if (elements.btnDeleteSlot) {
+    elements.btnDeleteSlot.addEventListener('click', () => {
+      if (state.apiKeys.length <= 1) return;
+      const index = state.apiKeys.findIndex(s => s.id === state.activeApiKeyId);
+      if (index !== -1) {
+        state.apiKeys.splice(index, 1);
+        state.activeApiKeyId = state.apiKeys[0].id;
+        syncActiveApiKeyFromSlots();
+        
+        const activeSlot = state.apiKeys[0];
+        elements.apiKeyInput.value = activeSlot.apiKey || '';
+        elements.apiUrlInput.value = activeSlot.apiUrl || '';
+        elements.modelInput.value = activeSlot.apiModel || '';
+        elements.slotNameInput.value = activeSlot.name || '';
+        
+        renderSettingsSlots();
+        renderTaskApiSwitch();
       }
     });
   }
@@ -9260,7 +11004,6 @@ function initEvents() {
 
 /* ==========================================================================
    Initialization Launcher
-   ========================================================================== */
 async function restoreFromDatabase() {
   try {
     const res = await fetch('/api/load-state');
@@ -9296,11 +11039,149 @@ async function restoreFromDatabase() {
 async function init() {
   await restoreFromDatabase();
   
+=======
+async function loadUserDataAndLaunch(username, token) {
+  const userDisplayName = document.getElementById('user-display-name');
+  if (userDisplayName) {
+    userDisplayName.textContent = username;
+  }
+
+  function loadLocalNamespaceData(uname) {
+    state.novels = safeJsonParse(localStorage.getItem(`multi_novels_${uname}`), [], `multi_novels_${uname}`);
+    state.activeNovelId = localStorage.getItem(`multi_active_novel_id_${uname}`) || '';
+    collapsedNovels = safeJsonParse(localStorage.getItem(`collapsed_novels_${uname}`), [], `collapsed_novels_${uname}`);
+    state.apiKey = localStorage.getItem(`novel_api_key_${uname}`) || '';
+    state.apiModel = localStorage.getItem(`novel_api_model_${uname}`) || 'gemini-2.0-flash';
+    state.apiUrl = localStorage.getItem(`novel_api_url_${uname}`) || 'https://generativelanguage.googleapis.com';
+    state.viewMode = localStorage.getItem(`novel_view_mode_${uname}`) || 'edit';
+    heartbeatState = safeJsonParse(localStorage.getItem(`agent_heartbeat_state_${uname}`), {}, `agent_heartbeat_state_${uname}`);
+    state.apiKeys = safeJsonParse(localStorage.getItem(`novel_api_keys_${uname}`), [], `novel_api_keys_${uname}`);
+    state.activeApiKeyId = localStorage.getItem(`novel_active_api_key_id_${uname}`) || '';
+    syncActiveApiKeyFromSlots();
+  }
+
+  try {
+    const res = await fetch('/api/user/load-data', {
+      headers: { 'X-User-Token': token }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && !data.empty) {
+        state.novels = data.novels || [];
+        state.activeNovelId = data.activeNovelId || '';
+        state.apiKey = data.apiKey || '';
+        state.apiModel = data.apiModel || 'gemini-2.0-flash';
+        state.apiUrl = data.apiUrl || 'https://generativelanguage.googleapis.com';
+        state.viewMode = data.viewMode || 'edit';
+        state.apiKeys = data.apiKeys || [];
+        state.activeApiKeyId = data.activeApiKeyId || '';
+        syncActiveApiKeyFromSlots();
+        if (data.collapsedNovels) collapsedNovels = data.collapsedNovels;
+        if (data.heartbeatState) heartbeatState = data.heartbeatState;
+      } else {
+        // 数据迁移检查：若云端空，优先检测浏览器老版本全局 LocalStorage 数据
+        let migrated = false;
+        const legacyNovelsStr = localStorage.getItem('multi_novels');
+        if (legacyNovelsStr) {
+          const parsedLegacy = safeJsonParse(legacyNovelsStr, []);
+          // 只要包含任何资产或章节，就进行迁移
+          if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0 && parsedLegacy.some(n => n.assets?.length > 0 || n.chapters?.length > 0)) {
+            console.log(`[Migration] 检测到全局历史数据（含 ${parsedLegacy[0].assets?.length} 个设定项），正在迁移至用户: ${username}`);
+            state.novels = parsedLegacy;
+            state.activeNovelId = localStorage.getItem('multi_active_novel_id') || parsedLegacy[0].id;
+            state.apiKey = localStorage.getItem('novel_api_key') || '';
+            state.apiModel = localStorage.getItem('novel_api_model') || 'gemini-2.0-flash';
+            state.apiUrl = localStorage.getItem('novel_api_url') || 'https://generativelanguage.googleapis.com';
+            state.viewMode = localStorage.getItem('novel_view_mode') || 'edit';
+            state.apiKeys = safeJsonParse(localStorage.getItem('novel_api_keys'), []);
+            state.activeApiKeyId = localStorage.getItem('novel_active_api_key_id') || '';
+            syncActiveApiKeyFromSlots();
+            collapsedNovels = safeJsonParse(localStorage.getItem('collapsed_novels'), []);
+            heartbeatState = safeJsonParse(localStorage.getItem('agent_heartbeat_state'), {});
+            
+            // 立即写入带专属后缀的本地存储，并触发 syncUserDataToServer 同步到服务器！
+            saveState();
+            migrated = true;
+          }
+        }
+        
+        if (!migrated) {
+          loadLocalNamespaceData(username);
+        }
+      }
+    } else if (res.status === 401) {
+      alert('您的登录已过期，请重新登录。');
+      localStorage.removeItem('novel_session_token');
+      localStorage.removeItem('novel_username');
+      location.reload();
+      return;
+    } else {
+      loadLocalNamespaceData(username);
+    }
+  } catch (err) {
+    console.error('从服务器加载数据失败，改用本地缓存：', err);
+    loadLocalNamespaceData(username);
+  }
+
+  if (!Array.isArray(state.novels) || !state.novels.length) {
+    const defaultNovel = cloneDefault(migratedDefaultNovel);
+    defaultNovel.id = `novel-${username}-default`;
+    state.novels = [defaultNovel];
+  }
+  if (!state.activeNovelId || !state.novels.some(n => n.id === state.activeNovelId)) {
+    state.activeNovelId = state.novels[0].id;
+  }
+  if (!Array.isArray(collapsedNovels)) {
+    collapsedNovels = state.novels.map(n => n.id).filter(id => id !== state.activeNovelId);
+  }
+
+  let migratedStyleChangeCount = 0;
+  let constitutionMigrationCount = 0;
+  let repairedGraphNameCount = 0;
+  let hydratedCharacterProfileCount = 0;
+  state.novels.forEach(novel => {
+    const graphRepair = repairNovelCharacterGraphData(novel);
+    if (graphRepair.renamed) {
+      repairedGraphNameCount += graphRepair.renamed;
+      refreshNovelKnowledgeGraph(novel);
+    }
+    if (graphRepair.hydratedFields) {
+      hydratedCharacterProfileCount += graphRepair.hydratedFields;
+      rebuildDerivedCharacterAssets(novel);
+      refreshNovelKnowledgeGraph(novel);
+    }
+    const expectedSignature = createSourceSignature(novel.background, novel.synopsis);
+    const needsConstitution = novel.storyConstitution?.sourceSignature !== expectedSignature ||
+      !(novel.assets || []).some(asset => asset.type === 'story-constitution');
+    ensureStoryConstitution(novel);
+    upsertStoryConstitutionAsset(novel);
+    if (needsConstitution) constitutionMigrationCount += 1;
+    const enforcement = enforceNovelStylePolicy(novel);
+    if (enforcement.changes.length) {
+      migratedStyleChangeCount += enforcement.changes.length;
+      refreshNovelKnowledgeGraph(novel);
+    }
+  });
+  if (
+    migratedStyleChangeCount > 0 ||
+    constitutionMigrationCount > 0 ||
+    repairedGraphNameCount > 0 ||
+    hydratedCharacterProfileCount > 0
+  ) {
+    saveState();
+    const messages = [];
+    if (constitutionMigrationCount) messages.push(`为 ${constitutionMigrationCount} 本作品建立了背景与简介宪法`);
+    if (migratedStyleChangeCount) messages.push(`修正 ${migratedStyleChangeCount} 处时代越界表达`);
+    if (repairedGraphNameCount) messages.push(`修复 ${repairedGraphNameCount} 个人物姓名及其关系端点`);
+    if (hydratedCharacterProfileCount) messages.push(`补全人物档案字段`);
+    showToast(`已${messages.join('，')}。`, 'info');
+  }
+
   const activeNovel = getActiveNovel();
-  
   renderChapters();
   renderNovels();
   applyBackground();
+  renderTaskApiSwitch();
   
   if (activeNovel) {
     switchEditorTarget(activeNovel.activeTarget.type, activeNovel.activeTarget.id);
@@ -9309,7 +11190,118 @@ async function init() {
   initEvents();
   startHeartbeatDaemon();
   lucide.createIcons();
+  applyViewMode();
 }
 
-// Ensure init runs after HTML load
-init();
+async function init() {
+  const token = localStorage.getItem('novel_session_token');
+  const username = localStorage.getItem('novel_username');
+  
+  const authContainer = document.getElementById('auth-container');
+  const appContainer = document.getElementById('app');
+  const authForm = document.getElementById('auth-form');
+  const authUsernameInput = document.getElementById('auth-username');
+  const authPasswordInput = document.getElementById('auth-password');
+  const authError = document.getElementById('auth-error');
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const logoutBtn = document.getElementById('logout-btn');
+  
+  let isRegisterMode = false;
+  
+  tabLogin.addEventListener('click', () => {
+    isRegisterMode = false;
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    authSubmitBtn.textContent = '登录';
+    authError.classList.add('hidden');
+  });
+  
+  tabRegister.addEventListener('click', () => {
+    isRegisterMode = true;
+    tabRegister.classList.add('active');
+    tabLogin.classList.remove('active');
+    authSubmitBtn.textContent = '注册';
+    authError.classList.add('hidden');
+  });
+  
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const usernameVal = authUsernameInput.value.trim();
+    const passwordVal = authPasswordInput.value;
+    
+    authError.classList.add('hidden');
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = isRegisterMode ? '正在注册...' : '正在登录...';
+    
+    try {
+      if (isRegisterMode) {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameVal, password: passwordVal })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '注册失败。');
+        }
+        showToast('注册成功，请使用新账号登录！', 'success');
+        isRegisterMode = false;
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        authSubmitBtn.textContent = '登录';
+        authSubmitBtn.disabled = false;
+        authPasswordInput.value = '';
+      } else {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameVal, password: passwordVal })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '登录失败。');
+        }
+        localStorage.setItem('novel_session_token', data.token);
+        localStorage.setItem('novel_username', data.username);
+        
+        authContainer.classList.add('hidden');
+        await loadUserDataAndLaunch(data.username, data.token);
+        appContainer.classList.remove('hidden');
+        showToast('登录成功！', 'success');
+      }
+    } catch (err) {
+      authError.textContent = err.message;
+      authError.classList.remove('hidden');
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = isRegisterMode ? '注册' : '登录';
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('novel_session_token');
+    localStorage.removeItem('novel_username');
+    location.reload();
+  });
+
+  if (token && username) {
+    authContainer.classList.add('hidden');
+    await loadUserDataAndLaunch(username, token);
+    appContainer.classList.remove('hidden');
+  } else {
+    authContainer.classList.remove('hidden');
+    appContainer.classList.add('hidden');
+  }
+}
+
+// Keep the initial DOM hidden until CSS, authentication, and persisted UI state are ready.
+init()
+  .catch(error => {
+    console.error('应用初始化失败：', error);
+    document.getElementById('auth-container')?.classList.remove('hidden');
+    document.getElementById('app')?.classList.add('hidden');
+  })
+  .finally(() => {
+    document.documentElement.classList.add('ui-ready');
+  });
