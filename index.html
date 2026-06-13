@@ -16,6 +16,16 @@
       html.ui-ready body {
         visibility: visible;
       }
+
+      html.preload-light {
+        background: #f8f9fa;
+      }
+
+      html.preload-light body {
+        background-image: var(--preload-background-image);
+        background-size: cover;
+        background-position: center;
+      }
     </style>
     <!-- 引入高质感现代字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,11 +36,13 @@
     <!-- 防黑闪：JS 执行前预读缓存背景写入样式 -->
     <script>
     try {
-      var _t = localStorage.getItem('novel_bg_type');
-      var _v = localStorage.getItem('novel_bg_css');
-      if (_t === 'light' && _v) {
-        document.documentElement.className += ' preload-light';
-        document.write('<style>body{background-image:' + _v + ';background-size:cover;background-position:center;}</style>');
+      const _t = localStorage.getItem('novel_bg_type');
+      const _v = localStorage.getItem('novel_bg_css');
+      if (_t === 'light') {
+        document.documentElement.classList.add('preload-light');
+        if (_v) {
+          document.documentElement.style.setProperty('--preload-background-image', _v);
+        }
       }
     } catch(e){}
     </script>
@@ -127,6 +139,11 @@
               <span class="divider"></span>
               <button class="tool-btn" id="btn-heading" title="插入标题 (Ctrl+H)"><i data-lucide="heading"></i></button>
               <button class="tool-btn" id="btn-code" title="插入代码块"><i data-lucide="code"></i></button>
+              <span class="divider"></span>
+              <button class="tool-btn tool-btn-ai" id="btn-ai-rewrite" title="使用 AI 修改选中文字">
+                <i data-lucide="wand-sparkles"></i>
+                <span>AI 改写</span>
+              </button>
             </div>
             <div class="toolbar-right">
               <div class="mode-selector">
@@ -139,6 +156,24 @@
           <!-- 文本编辑 / 预览区域 -->
           <div class="editor-body">
             <textarea id="editor-textarea" placeholder="在此开始创作您的故事... 支持 Markdown 格式"></textarea>
+            <!-- AI Inline Rewrite Floating Bubble -->
+            <div id="editor-ai-bubble" class="editor-ai-bubble" style="display: none;">
+              <div class="editor-ai-bubble-header">
+                <span>AI 修改建议</span>
+                <span id="editor-ai-bubble-model" class="editor-ai-bubble-model">Model</span>
+              </div>
+              <div id="editor-ai-bubble-selection" class="editor-ai-bubble-selection"></div>
+              <textarea id="editor-ai-bubble-textarea" class="editor-ai-bubble-textarea" placeholder="输入修改、润色或扩写指令..."></textarea>
+              <div class="editor-ai-bubble-actions">
+                <div id="editor-ai-bubble-loading" class="editor-ai-bubble-loading" style="display: none;">
+                  <div class="editor-ai-bubble-loading-spinner"></div>
+                  <span>AI 处理中...</span>
+                </div>
+                <div id="editor-ai-bubble-status" class="editor-ai-bubble-status"></div>
+                <button type="button" id="editor-ai-bubble-cancel" class="editor-ai-bubble-btn editor-ai-bubble-btn-cancel">取消</button>
+                <button type="button" id="editor-ai-bubble-submit" class="editor-ai-bubble-btn editor-ai-bubble-btn-submit">修改</button>
+              </div>
+            </div>
             <div id="editor-preview" class="markdown-preview hidden"></div>
             <div id="knowledge-graph-view" class="knowledge-graph-view hidden">
               <div class="graph-toolbar">
@@ -186,7 +221,7 @@
                 <li class="workflow-step" role="button" tabindex="0">
                   <strong>第一步：输入背景设定和简介</strong>
                   <p><code>背景设定：【女频，架空古代，玄幻，重生，无CP】，简介：【故事简介……】</code></p>
-                  <span class="workflow-step-description">背景设定必填，必须明确“男频/女频”和“架空古代/古武都市/现代都市/末世/星际”等时代或世界类型；简介选填。也可先上传 TXT 原著，由 AI 拆解其人物、剧情、逻辑、伏笔、节奏和叙事技法，再以低相似度方式构建新书总纲。</span>
+                  <span class="workflow-step-description">背景设定必填，必须明确“男频/女频”和“架空古代/古武都市/现代都市/末世”等时代或世界类型；简介选填。也可先上传 TXT 原著，拆解其人物、剧情、逻辑、伏笔、节奏和叙事技法，再以低相似度方式构建新书总纲。</span>
                   <div class="reference-upload" data-no-step-fill>
                     <label for="reference-novel-file">
                       <i data-lucide="file-up"></i>
@@ -216,6 +251,7 @@
             </div>
           </details>
           <div class="agent-task-input-wrapper">
+            <div id="agent-mention-dropdown" class="mention-dropdown hidden"></div>
             <textarea id="agent-task-textarea" placeholder="请按上方使用步骤输入任务，例如：构建至少50个人物" rows="1"></textarea>
             <button id="agent-task-send-btn" class="agent-task-send-btn">
               <span>开始执行</span>
@@ -372,7 +408,8 @@
             <div class="form-group">
               <label for="new-novel-background">背景设定 <span class="required-mark">*</span></label>
               <textarea id="new-novel-background" rows="4" placeholder="例如：女频，架空古代，玄幻言情，重生，团宠，无 CP" required></textarea>
-              <p class="form-hint">必填，必须明确“男频/女频”和时代或世界类型，例如“架空古代/古武都市/现代都市/末世/星际”。</p>
+              <p class="form-hint">只填写本书实际采用的标签，必须明确“男频/女频”和唯一主世界。可使用“题材：「…」情节：「…」角色：「…」情绪：「…」背景：「…」”分组格式。</p>
+              <div id="new-novel-background-semantics" class="background-semantic-preview hidden" aria-live="polite"></div>
             </div>
             <div class="form-group">
               <label for="new-novel-synopsis">作品简介 <span class="optional-mark">选填</span></label>
@@ -520,8 +557,12 @@
               </div>
               <div class="slot-edit-row">
                 <input type="text" id="slot-name-input" class="slot-name-input" placeholder="重命名当前配置槽..." style="box-sizing: border-box;" />
+                <button type="button" id="btn-set-primary-slot" class="btn btn-secondary">设为主控模型</button>
                 <button type="button" id="btn-delete-slot" class="btn-delete-slot">删除配置</button>
               </div>
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+                主控模型负责结构修复与失败复核；当前任务模型仍可在任务栏单独切换。
+              </p>
             </div>
             <div class="form-group">
               <label for="api-url-input">API 接口地址 (Base URL)</label>
@@ -529,25 +570,33 @@
             </div>
             <div class="form-group">
               <label for="api-key-input">API Key</label>
-              <input type="text" id="api-key-input" placeholder="请输入您的 API Key..." style="width: 100%; box-sizing: border-box;" />
+              <div class="api-key-container" style="position: relative; display: flex; align-items: center; width: 100%;">
+                <input type="password" id="api-key-input" placeholder="请输入您的 API Key..." style="width: 100%; box-sizing: border-box; padding-right: 40px;" />
+                <button type="button" id="toggle-api-key-visibility" class="toggle-password-btn" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; height: 100%; width: 30px; outline: none; padding: 0;">
+                  <i data-lucide="eye" id="api-key-eye-icon" style="width: 16px; height: 16px;"></i>
+                </button>
+              </div>
               <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
-                API Key 将保存在本地 LocalStorage 中，仅用于与 AI 进行交互。
+                API Key 将加密保存在本地数据库中，仅用于与 AI 进行交互。
               </p>
             </div>
             <div class="form-group">
               <label for="model-input">AI 模型型号</label>
               <input type="text" id="model-input" placeholder="请输入模型型号，例如 gemini-2.0-flash..." style="width: 100%; box-sizing: border-box;" required />
             </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+              <button type="submit" class="btn btn-primary" id="btn-save-api" style="width: 100%; justify-content: center; height: 38px; display: flex; align-items: center; font-weight: 500;">保存 API</button>
+            </div>
             <div class="form-group">
               <label>页面背景</label>
               <div id="bg-selector" class="bg-selector"></div>
               <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
-                选择背景后实时预览，点击「保存设置」生效。
+                选择背景后实时预览，点击下方的「保存背景色」生效。
               </p>
             </div>
-            <div class="form-actions">
+            <div class="form-actions" style="justify-content: flex-end; gap: 10px;">
               <button type="button" class="btn btn-secondary" id="btn-cancel-settings">取消</button>
-              <button type="submit" class="btn btn-primary">保存设置</button>
+              <button type="button" class="btn btn-primary" id="btn-save-bg">保存背景色</button>
             </div>
           </form>
         </div>
@@ -612,7 +661,7 @@
           </div>
         </div>
         <div class="modal-body">
-          <div id="reference-file-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-app); padding: 8px;">
+          <div id="reference-file-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-input); padding: 8px;">
             <!-- 动态渲染文件列表 -->
           </div>
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">
@@ -652,12 +701,33 @@
             <div class="agent-log-header" style="background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 8px 12px; font-weight: 500;">
               <span>拆解进度日志</span>
             </div>
-            <div class="agent-log-content" id="reference-log-content" style="max-height: 200px; overflow-y: auto; padding: 12px; font-family: monospace; font-size: 0.85rem; line-height: 1.5; background: var(--bg-app); border-radius: 0 0 8px 8px;">
+            <div class="agent-log-content" id="reference-log-content" style="max-height: 200px; overflow-y: auto; padding: 12px; font-family: monospace; font-size: 0.85rem; line-height: 1.5; background: var(--bg-input); border-radius: 0 0 8px 8px;">
               <div class="log-line system">初始化上传通道...</div>
             </div>
           </div>
           <div class="form-actions" style="margin-top: 20px; justify-content: flex-end;">
             <button type="button" class="btn btn-secondary" id="btn-close-reference-progress" disabled>请稍候...</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 引用文件同步修改确认弹窗 -->
+    <div class="modal-backdrop hidden" id="mention-sync-modal">
+      <div class="modal modal-wide" style="width: 760px; max-height: 90vh;">
+        <div class="modal-header">
+          <div>
+            <h3>确认文件修改与同步</h3>
+            <p class="modal-subtitle">AI 已生成您指定引用文件的修改，并分析了需要同步修改的关联文件。请选择要应用的修改项：</p>
+          </div>
+        </div>
+        <div class="modal-body" style="overflow-y: auto;">
+          <div id="mention-sync-list" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+            <!-- 动态渲染修改列表 -->
+          </div>
+          <div class="form-actions" style="justify-content: flex-end; gap: 12px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-mention-sync">取消修改</button>
+            <button type="button" class="btn btn-primary" id="btn-confirm-mention-sync">确认修改并同步</button>
           </div>
         </div>
       </div>
