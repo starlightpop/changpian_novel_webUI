@@ -27,4 +27,5 @@ dist-ssr
 data/app.db*
 data/novel-inputs/
 data/knowledge-graphs/
+data/users/
 data/session-secret.key
